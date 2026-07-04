@@ -1,0 +1,18 @@
+{
+  "ability.mythbound_core.test_ability.name": "Test Ability",
+  "ability.mythbound_core.test_ability.description": "And this right here is the description of the first test ability.",
+  "ability.mythbound_core.second_test_ability.name": "Test Ability 2",
+  "ability.mythbound_core.second_test_ability.description": "This here is the description of %nthe \nsecond test ability.",
+  "mythbound.configuration.failed": "Syncing reloadable data pack registries failed: %s",
+  "commands.mythbound_core.invalid_target": "That entity cannot equip abilities",
+  "commands.mythbound_core.empty_slot": "Slot %s is empty",
+  "commands.mythbound_core.get_ability_in_slot": "%s is equipped in slot %s",
+  "commands.mythbound_core.ability_not_unlocked": "You have not unlocked that ability",
+  "commands.mythbound_core.ability_already_in_slot": "Nothing changed, that ability was already equipped in that slot",
+  "commands.mythbound_core.set_ability_in_slot": "You equipped %s in slot %s",
+  "commands.mythbound_core.unlocked_ability": "You unlocked %s",
+  "commands.mythbound_core.already_unlocked": "You have already unlocked that ability",
+  "commands.mythbound_core.binding": "Press any free key to bind %s",
+  "commands.mythbound_core.bound_ability": "Bound %s to %s",
+  "commands.mythbound_core.unbound_ability": "Unbound %s"
+}

@@ -1,0 +1,18 @@
+{
+  "type": "mythbound_core:basic",
+  "name": "[{\"text\":\"Fireball\",\"color\":\"red\"}]",
+  "description": [
+    "description"
+  ],
+  "effects": [
+    {
+      "type": "mythbound_core:shoot_projectile",
+      "projectile": {
+        "id": "minecraft:small_fireball"
+      },
+      "velocity": 0.5,
+      "count": 6,
+      "spread": 8.0
+    }
+  ]
+}
