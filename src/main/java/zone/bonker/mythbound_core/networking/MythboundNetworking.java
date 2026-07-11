@@ -6,7 +6,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 @EventBusSubscriber
-public class MBCNetworking {
+public class MythboundNetworking {
     @SubscribeEvent
     public static void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("1");
@@ -19,9 +19,9 @@ public class MBCNetworking {
                 S2CEntityAbilityPacket::handle);
 
         registrar.playToClient(
-                S2CSyncAbilitiesPacket.TYPE,
-                S2CSyncAbilitiesPacket.CODEC,
-                S2CSyncAbilitiesPacket::handle);
+                S2CSyncRegistriesPacket.TYPE,
+                S2CSyncRegistriesPacket.CODEC,
+                S2CSyncRegistriesPacket::handle);
 
         // Client to Server
 

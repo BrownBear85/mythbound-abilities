@@ -1,0 +1,17 @@
+{
+  "name": "Frog",
+  "description": [
+    "Ribbit ribbit croak croak"
+  ],
+  "attributes": [
+    {
+      "attribute": "minecraft:generic.jump_strength",
+      "amount": 2.0,
+      "operation": "add_value"
+    }
+  ],
+  "possible_classes": [
+    "mythbound:speedster",
+    "mythbound:astronaut"
+  ]
+}

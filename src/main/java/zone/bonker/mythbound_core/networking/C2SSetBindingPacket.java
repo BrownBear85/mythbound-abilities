@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.AbilityBinding;
-import zone.bonker.mythbound_core.data.EntityAbilities;
+import zone.bonker.mythbound_core.data.CharacterBuild;
 
 import javax.annotation.Nullable;
 
@@ -28,7 +28,7 @@ public record C2SSetBindingPacket(ResourceLocation abilityId, @Nullable AbilityB
 
     public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-            EntityAbilities.setBind(context.player(), abilityId, binding);
+            CharacterBuild.get(context.player()).setAbilityBinding(abilityId, binding);
         });
     }
 }

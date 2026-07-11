@@ -1,0 +1,12 @@
+{
+  "name": "Mage",
+  "description": [
+    "Can do shoot fireball"
+  ],
+  "inherent_abilities": [
+    "mythbound:fireball"
+  ],
+  "possible_classes": [
+    "mythbound:speedster"
+  ]
+}

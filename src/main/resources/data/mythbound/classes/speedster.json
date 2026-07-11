@@ -1,0 +1,14 @@
+{
+  "name": "Speedster",
+  "description": [
+    "Fassstttt"
+  ],
+  "attributes": [
+    {
+      "attribute": "minecraft:generic.movement_speed",
+      "amount": 1.0,
+      "operation": "add_multiplied_total"
+    }
+  ],
+  "ability_tree": {}
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Dwarf",
+  "description": [
+    "Short and fat"
+  ],
+  "possible_classes": [
+    "mythbound:speedster",
+    "mythbound:astronaut"
+  ],
+  "model_properties": {
+    "width_scale": 1.2,
+    "height_scale": 0.8,
+    "depth_scale": 1.2
+  }
+}

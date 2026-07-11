@@ -6,85 +6,112 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.settings.KeyModifier;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.Ability;
 import zone.bonker.mythbound_core.core.AbilityBinding;
-import zone.bonker.mythbound_core.data.AbilityReloadListener;
-import zone.bonker.mythbound_core.data.EntityAbilities;
+import zone.bonker.mythbound_core.data.CharacterBuild;
 import zone.bonker.mythbound_core.networking.C2SCastAbilityPacket;
 import zone.bonker.mythbound_core.networking.C2SSetBindingPacket;
 
 import javax.annotation.Nullable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
 
-@EventBusSubscriber(value = Dist.CLIENT)
 public class AbilityInputHandler {
     @Nullable
     public static ResourceLocation abilityToBind = null;
     @Nullable
     private static InputConstants.Key pressedKey = null;
 
-    @SubscribeEvent
-    public static void keyPressed(InputEvent.Key event) {
+    public static boolean keyPressed(int keyCode, int scanCode, int action) {
         Player player = Minecraft.getInstance().player;
-        if (player == null) {
-            return;
+        if (player == null || Minecraft.getInstance().screen != null) {
+            abilityToBind = null;
+            pressedKey = null;
+            return false;
         }
 
-        if (abilityToBind == null && event.getAction() == GLFW.GLFW_PRESS) {
-            ResourceLocation id = EntityAbilities.getMatchingBoundAbility(player, event.getKey(), event.getScanCode());
-            if (id != null) {
-                Ability ability = AbilityReloadListener.getData().get(id);
-                if (ability != null && ability.canCast(player.level(), player)) {
-                    PacketDistributor.sendToServer(new C2SCastAbilityPacket(id));
+        if (abilityToBind == null && action == GLFW.GLFW_PRESS) {
+            Optional<CharacterBuild> optional = CharacterBuild.getExisting(player);
+            if (optional.isEmpty()) {
+                return false;
+            }
+
+            for (Iterator<Map.Entry<ResourceLocation, AbilityBinding>> iterator = optional.get().getAbilityBindings().entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<ResourceLocation, AbilityBinding> entry = iterator.next();
+                if (AbilityInputHandler.matches(entry.getValue(), keyCode, scanCode) && optional.get().hasAbility(entry.getKey())) {
+                    Ability ability = MythboundCore.ABILITIES.getData().get(entry.getKey());
+                    if (ability == null) {
+                        MythboundCoreClient.LOGGER.warn("{} was bound to an unregistered ability id {}, unbinding",
+                                getDisplayName(entry.getValue()).getString(), entry.getKey());
+                        iterator.remove();
+                    } else {
+                        PacketDistributor.sendToServer(new C2SCastAbilityPacket(entry.getKey()));
+                    }
+                    return false;
                 }
             }
         }
 
         if (abilityToBind != null) {
-            Ability ability = AbilityReloadListener.getData().get(abilityToBind);
-            if (ability == null) {
-                abilityToBind = null;
-                return;
+            if (action == GLFW.GLFW_REPEAT) {
+                return true;
             }
 
-            InputConstants.Key key = InputConstants.getKey(event.getKey(), event.getScanCode());
+            Ability ability = MythboundCore.ABILITIES.getData().get(abilityToBind);
+            if (ability == null) {
+                abilityToBind = null;
+                pressedKey = null;
+                return false;
+            }
 
-            if (event.getAction() == GLFW.GLFW_PRESS) {
-                if (event.getKey() == GLFW.GLFW_KEY_ESCAPE) {
+            InputConstants.Key key = InputConstants.getKey(keyCode, scanCode);
+
+            if (action == GLFW.GLFW_PRESS) {
+                if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                     PacketDistributor.sendToServer(new C2SSetBindingPacket(abilityToBind, new AbilityBinding(-1, (byte) 0, false, false, false)));
 
                     player.sendSystemMessage(
                             Component.translatable("commands." + MythboundCore.MODID + ".unbound_ability",
-                                    ability.getName()));
+                                    ability.name()));
 
                     abilityToBind = null;
                     pressedKey = null;
                 } else {
                     pressedKey = key;
                 }
-            } else if (event.getAction() == GLFW.GLFW_RELEASE) {
+                return true;
+            }
+
+            if (action == GLFW.GLFW_RELEASE) {
                 if (key == pressedKey) {
-                    AbilityBinding binding = new AbilityBinding(key.getValue(), (byte) key.getType().ordinal(), Screen.hasShiftDown(), Screen.hasControlDown(), Screen.hasAltDown());
+                    AbilityBinding binding = new AbilityBinding(
+                            key.getValue(),
+                            (byte) key.getType().ordinal(),
+                            Screen.hasShiftDown() && !KeyModifier.SHIFT.matches(key),
+                            Screen.hasControlDown() && !KeyModifier.CONTROL.matches(key),
+                            Screen.hasAltDown() && !KeyModifier.ALT.matches(key));
 
                     PacketDistributor.sendToServer(new C2SSetBindingPacket(abilityToBind, binding));
 
                     player.sendSystemMessage(
                             Component.translatable("commands." + MythboundCore.MODID + ".bound_ability",
-                                    ability.getName(),
-                                    MythboundCoreClient.getDisplayName(binding)));
+                                    ability.name(),
+                                    getDisplayName(binding)));
 
                     abilityToBind = null;
                 }
 
                 pressedKey = null;
+                return false;
             }
         }
+
+        return false;
     }
 
     public static boolean matches(AbilityBinding binding, int keyCode, int scanCode) {
@@ -92,5 +119,19 @@ public class AbilityInputHandler {
                 && (!binding.shift() || Screen.hasShiftDown())
                 && (!binding.control() || Screen.hasControlDown())
                 && (!binding.alt() || Screen.hasAltDown());
+    }
+
+    public static Component getDisplayName(AbilityBinding binding) {
+        Component component = InputConstants.Type.values()[binding.type()].getOrCreate(binding.key()).getDisplayName();
+        if (binding.alt()) {
+            component = Component.translatable("neoforge.controlsgui.alt", component);
+        }
+        if (binding.control()) {
+            component = Component.translatable(MythboundCoreClient.onMac() ? "neoforge.controlsgui.control.mac" : "neoforge.controlsgui.control", component);
+        }
+        if (binding.shift()) {
+            component = Component.translatable("neoforge.controlsgui.shift", component);
+        }
+        return component;
     }
 }

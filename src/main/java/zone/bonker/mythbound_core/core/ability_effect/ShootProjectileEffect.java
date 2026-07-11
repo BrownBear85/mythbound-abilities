@@ -1,4 +1,4 @@
-package zone.bonker.mythbound_core.core.passive_effects;
+package zone.bonker.mythbound_core.core.ability_effect;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -13,11 +13,9 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import zone.bonker.mythbound_core.core.AbilityEffect;
 
-public class ShootProjectileEffect extends AbilityEffect {
+public class ShootProjectileEffect extends MythboundEffect {
     public static final MapCodec<ShootProjectileEffect> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
             CompoundTag.CODEC.fieldOf("projectile").forGetter(o -> o.projectile),
             Codec.FLOAT.fieldOf("velocity").forGetter(o -> o.velocity),
@@ -41,13 +39,13 @@ public class ShootProjectileEffect extends AbilityEffect {
     }
 
     @Override
-    public MapCodec<? extends AbilityEffect> codec() {
+    public MapCodec<? extends MythboundEffect> codec() {
         return CODEC;
     }
 
     @Override
-    public void onCast(Level level, LivingEntity caster) {
-        if (level.isClientSide()) {
+    public void cast(LivingEntity caster) {
+        if (caster.level().isClientSide()) {
             return;
         }
 
@@ -65,7 +63,7 @@ public class ShootProjectileEffect extends AbilityEffect {
                 Mth.cos(yRot * Mth.DEG_TO_RAD) * Mth.cos(xRot * Mth.DEG_TO_RAD));
 
         for (int i = 0; i < count; i++) {
-            Entity entity = entityType.create((ServerLevel) level, e -> {
+            Entity entity = entityType.create((ServerLevel) caster.level(), e -> {
                 e.setPos(caster.getEyePosition());
                 if (e instanceof Projectile projEntity) {
                     projEntity.setOwner(caster);
@@ -73,7 +71,7 @@ public class ShootProjectileEffect extends AbilityEffect {
                 shoot(e, angle, velocity, spread);
             }, caster.blockPosition(), MobSpawnType.COMMAND, false, false);
             if (entity != null) {
-                level.addFreshEntity(entity);
+                caster.level().addFreshEntity(entity);
             }
         }
     }

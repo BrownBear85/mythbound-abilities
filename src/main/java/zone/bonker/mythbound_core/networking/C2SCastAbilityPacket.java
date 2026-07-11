@@ -8,8 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.Ability;
-import zone.bonker.mythbound_core.data.AbilityReloadListener;
-import zone.bonker.mythbound_core.data.EntityAbilities;
+import zone.bonker.mythbound_core.data.CharacterBuild;
 
 public record C2SCastAbilityPacket(ResourceLocation abilityId) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<C2SCastAbilityPacket> TYPE = new CustomPacketPayload.Type<>(MythboundCore.identifier("c2s_cast_ability"));
@@ -31,18 +30,18 @@ public record C2SCastAbilityPacket(ResourceLocation abilityId) implements Custom
                 return;
             }
 
-            Ability ability = AbilityReloadListener.getData().get(abilityId);
+            Ability ability = MythboundCore.ABILITIES.getData().get(abilityId);
             if (ability == null) {
                 MythboundCore.LOGGER.warn("Player {} tried to cast an unregistered ability {}", context.player().getScoreboardName(), abilityId);
                 return;
             }
 
-            if (!EntityAbilities.hasAbility(context.player(), abilityId)) {
+            if (!CharacterBuild.get(context.player()).hasAbility(abilityId)) {
                 MythboundCore.LOGGER.warn("Player {} tried to cast an ability that they don't have unlocked", context.player().getScoreboardName());
                 return;
             }
 
-            ability.tryCast(serverLevel, context.player());
+            ability.tryCast(context.player());
         });
     }
 }

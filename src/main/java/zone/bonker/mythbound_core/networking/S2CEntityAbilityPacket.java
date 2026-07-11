@@ -11,7 +11,6 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.Ability;
-import zone.bonker.mythbound_core.data.AbilityReloadListener;
 
 public record S2CEntityAbilityPacket(int entityId, ResourceLocation abilityId) implements CustomPacketPayload {
     public static final Type<S2CEntityAbilityPacket> TYPE = new Type<>(MythboundCore.identifier("s2c_ability_cast"));
@@ -31,7 +30,7 @@ public record S2CEntityAbilityPacket(int entityId, ResourceLocation abilityId) i
     public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             Level level = context.player().level();
-            Ability ability = AbilityReloadListener.getData().get(abilityId);
+            Ability ability = MythboundCore.ABILITIES.getData().get(abilityId);
             if (ability == null) {
                 return;
             }
@@ -41,7 +40,7 @@ public record S2CEntityAbilityPacket(int entityId, ResourceLocation abilityId) i
                 return;
             }
 
-            ability.onCast(level, livingEntity);
+            ability.cast(livingEntity);
         });
     }
 }

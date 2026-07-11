@@ -1,0 +1,14 @@
+{
+  "name": "Astronaut",
+  "description": [
+    "Space or smth idk"
+  ],
+  "attributes": [
+    {
+      "attribute": "minecraft:generic.gravity",
+      "amount": -0.8,
+      "operation": "add_multiplied_base"
+    }
+  ],
+  "ability_tree": {}
+}
