@@ -11,7 +11,8 @@
     "requireAnnotations": true
   },
   "client": [
+    "EntityRenderDispatcherMixin",
     "KeyboardHandlerMixin",
-    "LivingEntityRendererMixin"
+    "PlayerRendererMixin"
   ]
 }

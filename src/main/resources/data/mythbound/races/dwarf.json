@@ -8,8 +8,27 @@
     "mythbound:astronaut"
   ],
   "model_properties": {
-    "width_scale": 1.2,
-    "height_scale": 0.8,
-    "depth_scale": 1.2
+    "hitbox_scale_x": 1.3,
+    "hitbox_scale_y": 0.85,
+    "legs": {
+      "x_scale": 1.3,
+      "y_scale": 0.8,
+      "z_scale": 1.3
+    },
+    "arms": {
+      "x_scale": 1.4,
+      "y_scale": 0.8,
+      "z_scale": 1.4
+    },
+    "body": {
+      "x_scale": 1.3,
+      "y_scale": 0.8,
+      "z_scale": 2.4
+    },
+    "head": {
+      "x_scale": 1.1,
+      "y_scale": 1.1,
+      "z_scale": 1.1
+    }
   }
 }

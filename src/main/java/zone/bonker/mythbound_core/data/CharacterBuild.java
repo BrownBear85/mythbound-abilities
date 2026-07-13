@@ -134,7 +134,6 @@ public class CharacterBuild implements OwnedAttachment {
         this.raceId = id;
         save();
 
-        refreshDimensions(entity);
         if (race != null) {
             race.initialize(entity);
         }
@@ -160,7 +159,6 @@ public class CharacterBuild implements OwnedAttachment {
         this.classId = id;
         save();
 
-        refreshDimensions(entity);
         if (characterClass != null) {
             characterClass.initialize(entity);
         }

@@ -13,7 +13,8 @@ import zone.bonker.mythbound_core.data.MythboundSerialization;
 import java.util.List;
 
 public record Race(Component name, List<Component> description, AttributeList attributes, List<MythboundEffect> effects,
-                   List<Ability> inherentAbilities, List<CharacterClass> possibleClasses, ModelProperties modelProperties) implements NamedAndDescribed {
+                   List<Ability> inherentAbilities, List<CharacterClass> possibleClasses, ModelProperties modelProperties)
+        implements NamedAndDescribed, ModelProperties.ModelPropContainer {
 
     public static final Codec<Race> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             MythboundSerialization.LENIENT_COMPONENT_CODEC.fieldOf("name").forGetter(Race::name),
@@ -25,6 +26,7 @@ public record Race(Component name, List<Component> description, AttributeList at
             ModelProperties.CODEC.optionalFieldOf("model_properties", ModelProperties.DEFAULT).forGetter(Race::modelProperties)
     ).apply(inst, Race::new));
 
+    @Override
     public ResourceLocation getId() {
         return MythboundCore.RACES.getData().inverse().get(this);
     }
@@ -36,6 +38,10 @@ public record Race(Component name, List<Component> description, AttributeList at
         for (Ability ability : inherentAbilities) {
             data.unlockAbility(ability);
         }
+
+        if (modelProperties.hasCustomHitbox()) {
+            CharacterBuild.refreshDimensions(entity);
+        }
     }
 
     public void deinitialize(LivingEntity entity) {
@@ -45,19 +51,9 @@ public record Race(Component name, List<Component> description, AttributeList at
         for (Ability ability : inherentAbilities) {
             data.removeAbility(ability);
         }
-    }
 
-    public record ModelProperties(float widthScale, float heightScale, float depthScale) {
-        public static final ModelProperties DEFAULT = new ModelProperties(1.0F, 1.0F, 1.0F);
-
-        public static final Codec<ModelProperties> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-                Codec.FLOAT.optionalFieldOf("width_scale", 1.0F).forGetter(ModelProperties::widthScale),
-                Codec.FLOAT.optionalFieldOf("height_scale", 1.0F).forGetter(ModelProperties::heightScale),
-                Codec.FLOAT.optionalFieldOf("depth_scale", 1.0F).forGetter(ModelProperties::depthScale)
-        ).apply(inst, ModelProperties::new));
-
-        public boolean isDefault() {
-            return this.equals(DEFAULT);
+        if (modelProperties.hasCustomHitbox()) {
+            CharacterBuild.refreshDimensions(entity);
         }
     }
 }

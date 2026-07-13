@@ -38,12 +38,12 @@ public class MythboundEvents {
         CharacterBuild.getExisting(entity).ifPresent(data -> {
             Race race = data.getRace();
             if (race != null) {
-                race.attributes().apply(entity, AttributeList.RACE);
+                race.initialize(entity);
             }
 
             CharacterClass characterClass = data.getCharacterClass();
             if (characterClass != null) {
-                characterClass.attributes().apply(entity, AttributeList.CLASS);
+                characterClass.initialize(entity);
             }
 
             for (Iterator<ResourceLocation> iterator = data.getUnlockedAbilityIds().iterator(); iterator.hasNext(); ) {
@@ -114,13 +114,13 @@ public class MythboundEvents {
         }
 
         Race race = optional.get().getRace();
-        if (race == null || race.modelProperties().isDefault()) {
+        if (race == null || !race.modelProperties().hasCustomHitbox()) {
             return;
         }
 
         event.setNewSize(event.getNewSize().scale(
-                (race.modelProperties().widthScale() + race.modelProperties().depthScale()) * 0.5F,
-                race.modelProperties().heightScale())
-        );
+                race.modelProperties().hitboxScaleX(),
+                race.modelProperties().hitboxScaleY()
+        ));
     }
 }

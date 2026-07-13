@@ -7,12 +7,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability_effect.MythboundEffect;
+import zone.bonker.mythbound_core.data.CharacterBuild;
 import zone.bonker.mythbound_core.data.MythboundSerialization;
 
 import java.util.List;
 
 public record CharacterClass(Component name, List<Component> description, AttributeList attributes, List<MythboundEffect> effects,
-                             AbilityTree abilityTree, List<ResourceLocation> possibleRaceIds) implements NamedAndDescribed {
+                             AbilityTree abilityTree, List<ResourceLocation> possibleRaceIds, ModelProperties modelProperties)
+        implements NamedAndDescribed, ModelProperties.ModelPropContainer {
 
     public static final Codec<CharacterClass> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             MythboundSerialization.LENIENT_COMPONENT_CODEC.fieldOf("name").forGetter(CharacterClass::name),
@@ -20,9 +22,11 @@ public record CharacterClass(Component name, List<Component> description, Attrib
             AttributeList.CODEC.optionalFieldOf("attributes", AttributeList.EMPTY).forGetter(CharacterClass::attributes),
             MythboundEffect.DIRECT_CODEC.listOf().optionalFieldOf("effects", List.of()).forGetter(CharacterClass::effects),
             AbilityTree.CODEC.fieldOf("ability_tree").forGetter(CharacterClass::abilityTree),
-            ResourceLocation.CODEC.listOf().optionalFieldOf("possible_races", List.of()).forGetter(CharacterClass::possibleRaceIds)
+            ResourceLocation.CODEC.listOf().optionalFieldOf("possible_races", List.of()).forGetter(CharacterClass::possibleRaceIds),
+            ModelProperties.CODEC.optionalFieldOf("model_properties", ModelProperties.DEFAULT).forGetter(CharacterClass::modelProperties)
     ).apply(inst, CharacterClass::new));
 
+    @Override
     public ResourceLocation getId() {
         return MythboundCore.CLASSES.getData().inverse().get(this);
     }
@@ -30,10 +34,18 @@ public record CharacterClass(Component name, List<Component> description, Attrib
     public void initialize(LivingEntity entity) {
         attributes.apply(entity, AttributeList.CLASS);
         abilityTree.initialize();
+
+        if (modelProperties.hasCustomHitbox()) {
+            CharacterBuild.refreshDimensions(entity);
+        }
     }
 
     public void deinitialize(LivingEntity entity) {
         attributes.remove(entity, AttributeList.CLASS);
         abilityTree.deinitialize();
+
+        if (modelProperties.hasCustomHitbox()) {
+            CharacterBuild.refreshDimensions(entity);
+        }
     }
 }
