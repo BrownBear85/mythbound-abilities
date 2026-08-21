@@ -6,7 +6,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import zone.bonker.mythbound_core.MythboundCore;
-import zone.bonker.mythbound_core.core.AbilityBinding;
+import zone.bonker.mythbound_core.core.ability.AbilityBinding;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 
 import javax.annotation.Nullable;

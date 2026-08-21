@@ -1,4 +1,4 @@
-package zone.bonker.mythbound_core.core;
+package zone.bonker.mythbound_core.core.ability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

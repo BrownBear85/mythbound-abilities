@@ -1,4 +1,4 @@
-package zone.bonker.mythbound_core;
+package zone.bonker.mythbound_core.client.model;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

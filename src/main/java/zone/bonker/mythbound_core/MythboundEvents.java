@@ -12,11 +12,11 @@ import net.neoforged.neoforge.event.entity.EntityEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
-import zone.bonker.mythbound_core.core.Ability;
+import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.AttributeList;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.Race;
-import zone.bonker.mythbound_core.core.ability_effect.MythboundEffect;
+import zone.bonker.mythbound_core.core.ability.component.AbilityComponent;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 
 import java.util.HashSet;
@@ -66,16 +66,16 @@ public class MythboundEvents {
         }
 
         CharacterBuild.getExisting(entity).ifPresent(data -> {
-            Set<MythboundEffect> effects = new HashSet<>();
+            Set<AbilityComponent> effects = new HashSet<>();
 
             Race race = data.getRace();
             if (race != null) {
-                effects.addAll(race.effects());
+                effects.addAll(race.components());
             }
 
             CharacterClass characterClass = data.getCharacterClass();
             if (characterClass != null) {
-                effects.addAll(characterClass.effects());
+                effects.addAll(characterClass.components());
             }
 
             for (Iterator<ResourceLocation> iterator = data.getUnlockedAbilityIds().iterator(); iterator.hasNext(); ) {
@@ -85,7 +85,7 @@ public class MythboundEvents {
                     MythboundCore.LOGGER.warn("Tried to tick unregistered ability {}, removing from entity {}", id, entity);
                     iterator.remove();
                 } else {
-                    effects.addAll(ability.effects());
+                    effects.addAll(ability.components());
                 }
             }
 

@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import zone.bonker.mythbound_core.MythboundCore;
-import zone.bonker.mythbound_core.core.Ability;
+import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 
 public record C2SCastAbilityPacket(ResourceLocation abilityId) implements CustomPacketPayload {

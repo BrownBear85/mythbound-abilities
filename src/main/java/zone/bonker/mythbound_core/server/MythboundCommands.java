@@ -1,6 +1,7 @@
 package zone.bonker.mythbound_core.server;
 
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -18,11 +19,12 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import zone.bonker.mythbound_core.MythboundCore;
-import zone.bonker.mythbound_core.core.Ability;
+import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.NamedAndDescribed;
 import zone.bonker.mythbound_core.core.Race;
 import zone.bonker.mythbound_core.data.CharacterBuild;
+import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;
 
 import java.util.List;
 
@@ -60,7 +62,11 @@ public class MythboundCommands {
                         .then(Commands.literal("class")
                                 .then(Commands.argument("class", MythboundRegistryArgument.characterClass())
                                         .suggests(MythboundRegistryArgument.SUGGEST_ALL_CLASSES)
-                                        .executes(MythboundCommands::setClass))))
+                                        .executes(MythboundCommands::setClass)))
+                        .then(Commands.literal("points")
+                                .then(Commands.argument("class_points", IntegerArgumentType.integer(0))
+                                        .then(Commands.argument("subclass_points", IntegerArgumentType.integer(0))
+                                            .executes(MythboundCommands::setPoints))))
                 .then(Commands.literal("info")
                         .then(Commands.literal("race")
                                 .then(Commands.argument("race", MythboundRegistryArgument.race())
@@ -75,7 +81,9 @@ public class MythboundCommands {
                                         .suggests(MythboundRegistryArgument.SUGGEST_ALL_ABILITIES)
                                         .executes(context -> sendInfo(context, context.getArgument("ability", Ability.class))))))
                 .then(Commands.literal("reload")
-                        .executes(MythboundCommands::reloadBuild)));
+                        .executes(MythboundCommands::reloadBuild)))
+                .then(Commands.literal("reset")
+                        .executes(MythboundCommands::resetBuild)));
     }
 
     private static int getRace(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -153,6 +161,15 @@ public class MythboundCommands {
         }
     }
 
+    private static int setPoints(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        LivingEntity entity = verifyLivingEntity(context);
+        int classPoints = context.getArgument("class_points", int.class);
+        int subclassPoints = context.getArgument("subclass_points", int.class);
+
+        CharacterBuild.get(entity).setPoints(classPoints, subclassPoints);
+        return SUCCESS;
+    }
+
     private static int unlockAbility(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         LivingEntity entity = verifyLivingEntity(context);
         Ability ability = context.getArgument("ability", Ability.class);
@@ -215,6 +232,15 @@ public class MythboundCommands {
 
         context.getSource().sendSuccess(() -> Component.translatable("commands." + MythboundCore.MODID + ".reloaded_build"), false);
         return SUCCESS;
+    }
+
+    private static int resetBuild(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        LivingEntity entity = verifyLivingEntity(context);
+        entity.removeData(MythboundAttachmentTypes.CHARACTER_BUILD);
+        CharacterBuild.get(entity);
+
+        context.getSource().sendSuccess(() -> Component.translatable("commands." + MythboundCore.MODID + ".reset_build"), false);
+        return 1;
     }
 
     //// METHODS

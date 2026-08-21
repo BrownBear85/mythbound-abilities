@@ -4,8 +4,7 @@
     "Short and fat"
   ],
   "possible_classes": [
-    "mythbound:speedster",
-    "mythbound:astronaut"
+
   ],
   "model_properties": {
     "hitbox_scale_x": 1.3,

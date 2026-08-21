@@ -10,12 +10,12 @@ import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import org.slf4j.Logger;
 
-import zone.bonker.mythbound_core.core.Ability;
+import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.Race;
 import zone.bonker.mythbound_core.data.MythboundReloadableRegistries;
 import zone.bonker.mythbound_core.data.ReloadableJsonRegistry;
-import zone.bonker.mythbound_core.init.MythboundEffectSerializers;
+import zone.bonker.mythbound_core.init.AbilityComponentSerializers;
 import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;
 import zone.bonker.mythbound_core.server.MythboundCommands;
 
@@ -34,7 +34,7 @@ public class MythboundCore {
 
         NeoForge.EVENT_BUS.addListener(this::addReloadListeners);
 
-        MythboundEffectSerializers.REGISTER.register(modEventBus);
+        AbilityComponentSerializers.REGISTER.register(modEventBus);
 
         MythboundAttachmentTypes.ATTACHMENT_TYPES.register(modEventBus);
         MythboundCommands.ARGUMENT_TYPE_INFOS.register(modEventBus);
@@ -47,7 +47,7 @@ public class MythboundCore {
     //// EVENTS
 
     private void newRegistries(NewRegistryEvent event) {
-        event.register(MythboundEffectSerializers.REGISTRY);
+        event.register(AbilityComponentSerializers.REGISTRY);
     }
 
     private void addReloadListeners(AddReloadListenerEvent event) {

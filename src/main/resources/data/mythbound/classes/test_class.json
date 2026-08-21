@@ -1,0 +1,90 @@
+{
+  "name": "Test class",
+  "description": [
+    "A class for testing"
+  ],
+  "main_ability_tree": {
+    "nodes": [
+      {
+        "ability": "mythbound:test1",
+        "row": 1,
+        "column": 2,
+        "cost": 1
+      },
+      {
+        "ability": "mythbound:test2",
+        "row": 2,
+        "column": 2,
+        "cost": 1,
+        "requires": [
+          "mythbound:test1"
+        ]
+      },
+      {
+        "ability": "mythbound:test3",
+        "row": 3,
+        "column": 1,
+        "cost": 1,
+        "requires": [
+          "mythbound:test2"
+        ]
+      },
+      {
+        "ability": "mythbound:test4",
+        "row": 3,
+        "column": 3,
+        "cost": 1,
+        "requires": [
+          "mythbound:test2"
+        ]
+      },
+      {
+        "ability": "mythbound:test5",
+        "row": 4,
+        "column": 2,
+        "cost": 1,
+        "requires": [
+          "mythbound:test3",
+          "mythbound:test4"
+        ]
+      }
+    ]
+  },
+  "subclasses": {
+    "mythbound:test_subclass": {
+      "name": "Test Subclass",
+      "description": [
+        "The description for the test subclass"
+      ],
+      "ability_tree": {
+        "nodes": [
+          {
+            "ability": "mythbound:test1",
+            "column": 3,
+            "row": 4
+          },
+          {
+            "ability": "mythbound:test2",
+            "column": 4,
+            "row": 3
+          },
+          {
+            "ability": "mythbound:test3",
+            "column": 5,
+            "row": 2
+          },
+          {
+            "ability": "mythbound:test4",
+            "column": 6,
+            "row": 1
+          },
+          {
+            "ability": "mythbound:test5",
+            "column": 7,
+            "row": 0
+          }
+        ]
+      }
+    }
+  }
+}

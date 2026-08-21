@@ -1,4 +1,4 @@
-package zone.bonker.mythbound_core.client;
+package zone.bonker.mythbound_core.client.model;
 
 import net.minecraft.client.model.AnimationUtils;
 import net.minecraft.client.model.HumanoidModel;

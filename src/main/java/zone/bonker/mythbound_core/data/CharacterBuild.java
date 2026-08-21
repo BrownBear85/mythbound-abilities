@@ -10,8 +10,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.neoforged.neoforge.attachment.IAttachmentHolder;
+import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
 import zone.bonker.mythbound_core.MythboundCore;
+import zone.bonker.mythbound_core.client.MythboundCoreClient;
 import zone.bonker.mythbound_core.core.*;
+import zone.bonker.mythbound_core.core.ability.Ability;
+import zone.bonker.mythbound_core.core.ability.AbilityBinding;
+import zone.bonker.mythbound_core.core.ability.AbilityTree;
 import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;
 
 import javax.annotation.Nullable;
@@ -23,21 +28,31 @@ public class CharacterBuild implements OwnedAttachment {
     public static final Codec<CharacterBuild> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ResourceLocation.CODEC.fieldOf("race").forGetter(o -> o.raceId),
             ResourceLocation.CODEC.fieldOf("class").forGetter(o -> o.classId),
+            ResourceLocation.CODEC.fieldOf("subclass").forGetter(o -> o.subclassId),
+            Codec.INT.fieldOf("class_unlock_points").forGetter(o -> o.classUnlockPoints),
+            Codec.INT.fieldOf("subclass_unlock_points").forGetter(o -> o.subclassUnlockPoints),
             ResourceLocation.CODEC.listOf().fieldOf("abilities").forGetter(o -> o.abilities),
             Codec.unboundedMap(ResourceLocation.CODEC, AbilityBinding.CODEC).fieldOf("bindings").forGetter(o -> o.bindings)
     ).apply(inst, CharacterBuild::new));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, CharacterBuild> NETWORK_CODEC = StreamCodec.composite(
+    public static final StreamCodec<RegistryFriendlyByteBuf, CharacterBuild> NETWORK_CODEC = NeoForgeStreamCodecs.composite(
             ResourceLocation.STREAM_CODEC, o -> o.raceId,
             ResourceLocation.STREAM_CODEC, o -> o.classId,
+            ResourceLocation.STREAM_CODEC, o -> o.subclassId,
+            ByteBufCodecs.VAR_INT, o -> o.classUnlockPoints,
+            ByteBufCodecs.VAR_INT, o -> o.subclassUnlockPoints,
             ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), o -> o.abilities,
             ByteBufCodecs.map(HashMap::new, ResourceLocation.STREAM_CODEC, AbilityBinding.NETWORK_CODEC), o -> o.bindings,
             CharacterBuild::new);
 
     private ResourceLocation raceId = NONE;
     private ResourceLocation classId = NONE;
+    private ResourceLocation subclassId = NONE;
+    private int classUnlockPoints;
+    private int subclassUnlockPoints;
     private final List<ResourceLocation> abilities = new ArrayList<>();
     private final Map<ResourceLocation, AbilityBinding> bindings = new HashMap<>();
+
     private LivingEntity entity;
 
     public CharacterBuild(IAttachmentHolder holder) {
@@ -47,9 +62,14 @@ public class CharacterBuild implements OwnedAttachment {
         setOwner(livingEntity);
     }
 
-    public CharacterBuild(ResourceLocation raceId, ResourceLocation classId, List<ResourceLocation> abilities, Map<ResourceLocation, AbilityBinding> bindings) {
+    public CharacterBuild(ResourceLocation raceId, ResourceLocation classId, ResourceLocation subclassId,
+                          int classUnlockPoints, int subclassUnlockPoints, List<ResourceLocation> abilities,
+                          Map<ResourceLocation, AbilityBinding> bindings) {
         this.raceId = raceId;
         this.classId = classId;
+        this.subclassId = subclassId;
+        this.classUnlockPoints = classUnlockPoints;
+        this.subclassUnlockPoints = subclassUnlockPoints;
         this.abilities.addAll(abilities);
         this.bindings.putAll(bindings);
     }
@@ -92,6 +112,15 @@ public class CharacterBuild implements OwnedAttachment {
         return classId.equals(NONE) ? null : MythboundCore.CLASSES.getData().get(classId);
     }
 
+    public Subclass getSubclass() {
+        if (subclassId.equals(NONE)) {
+            return null;
+        }
+
+        CharacterClass characterClass = getCharacterClass();
+        return characterClass == null ? null : characterClass.subclasses().get(subclassId);
+    }
+
     public List<ResourceLocation> getUnlockedAbilityIds() {
         return abilities;
     }
@@ -102,6 +131,14 @@ public class CharacterBuild implements OwnedAttachment {
 
     public boolean hasAbility(ResourceLocation id) {
         return entity.getData(MythboundAttachmentTypes.CHARACTER_BUILD).abilities.contains(id);
+    }
+
+    public int getClassUnlockPoints() {
+        return classUnlockPoints;
+    }
+
+    public int getSubclassUnlockPoints() {
+        return subclassUnlockPoints;
     }
 
     //// SETTERS
@@ -161,6 +198,9 @@ public class CharacterBuild implements OwnedAttachment {
 
         if (characterClass != null) {
             characterClass.initialize(entity);
+
+            subclassId = characterClass.subclasses().keySet().stream().findAny().orElse(NONE);
+            save();
         }
         return true;
     }
@@ -175,6 +215,29 @@ public class CharacterBuild implements OwnedAttachment {
 
         ability.initialize(entity);
         return true;
+    }
+
+    public void unlockAbilityFromTree(Ability ability, int cost, boolean mainAbilityTree) {
+        if (unlockAbility(ability)) {
+            if (mainAbilityTree) {
+                classUnlockPoints -= cost;
+            } else {
+                subclassUnlockPoints -= cost;
+            }
+            save();
+
+            if (mainAbilityTree) {
+                CharacterClass characterClass = getCharacterClass();
+                if (characterClass != null) {
+                    characterClass.mainAbilityTree().unlockAllFreeAbilities(this);
+                }
+            } else {
+                Subclass subclass = getSubclass();
+                if (subclass != null) {
+                    subclass.abilityTree().unlockAllFreeAbilities(this);
+                }
+            }
+        }
     }
 
     public boolean removeAbility(Ability ability) {
@@ -197,5 +260,18 @@ public class CharacterBuild implements OwnedAttachment {
             bindings.put(id, binding);
         }
         save();
+    }
+
+    public void setPoints(int classPoints, int subclassPoints) {
+        this.classUnlockPoints = classPoints;
+        this.subclassUnlockPoints = subclassPoints;
+        save();
+    }
+
+    //// MISC METHODS
+
+    @Override
+    public void onUpdatedOnClient() {
+        MythboundCoreClient.refreshCurrentScreen(this);
     }
 }

@@ -34,5 +34,10 @@ public class MythboundNetworking {
                 C2SSetBindingPacket.TYPE,
                 C2SSetBindingPacket.CODEC,
                 C2SSetBindingPacket::handle);
+
+        registrar.playToServer(
+                C2SUnlockAbilityPacket.TYPE,
+                C2SUnlockAbilityPacket.CODEC,
+                C2SUnlockAbilityPacket::handle);
     }
 }

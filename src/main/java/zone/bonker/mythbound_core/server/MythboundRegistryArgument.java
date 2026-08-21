@@ -14,7 +14,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import zone.bonker.mythbound_core.MythboundCore;
-import zone.bonker.mythbound_core.core.Ability;
+import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.Race;
 import zone.bonker.mythbound_core.data.CharacterBuild;

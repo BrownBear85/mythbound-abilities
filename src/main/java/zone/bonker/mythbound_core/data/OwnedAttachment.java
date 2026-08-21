@@ -17,6 +17,10 @@ import org.jetbrains.annotations.Nullable;
 public interface OwnedAttachment {
     void setOwner(LivingEntity entity);
 
+    default void onUpdatedOnClient() {
+
+    }
+
     record Serializer<T extends OwnedAttachment>(Codec<T> codec) implements IAttachmentSerializer<Tag, T> {
         @Override
         public @NotNull T read(@NotNull IAttachmentHolder holder, @NotNull Tag tag, HolderLookup.Provider provider) {
@@ -48,6 +52,7 @@ public interface OwnedAttachment {
         public T read(IAttachmentHolder holder, RegistryFriendlyByteBuf buf, @Nullable T previousValue) {
             T obj = networkCodec.decode(buf);
             obj.setOwner((LivingEntity) holder);
+            obj.onUpdatedOnClient();
             return obj;
         }
     }

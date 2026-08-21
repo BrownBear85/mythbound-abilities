@@ -19,5 +19,16 @@
   "commands.mythbound_core.bound_ability": "Bound %s to %s",
   "commands.mythbound_core.unbound_ability": "Unbound %s",
   "commands.mythbound_core.reloaded_build": "Reloaded your character build",
-  "commands.mythbound_core.unregistered_id": "Unregistered id: %s"
+  "commands.mythbound_core.reset_build": "Reset your character build",
+  "commands.mythbound_core.unregistered_id": "Unregistered id: %s",
+  "error.mythbound_core.registry_sync_error": "An error occurred whilst syncing Mythbound's reloadable datapack registries: %s",
+  "gui.mythbound_core.ability_tree.title": "Unlock Abilities",
+  "gui.mythbound_core.ability_tree.no_subclass": "No Subclass Selected",
+  "gui.mythbound_core.ability_tree.points_available": "%s Points Available",
+  "gui.mythbound_core.ability_tree.node_requirements": "Requires %s",
+  "gui.mythbound_core.ability_tree.node_cannot_afford_plural": "Costs %s points",
+  "gui.mythbound_core.ability_tree.node_cannot_afford": "Costs %s point",
+  "gui.mythbound_core.ability_tree.node_click_to_unlock_plural": "Click to unlock for %s points",
+  "gui.mythbound_core.ability_tree.node_click_to_unlock": "Click to unlock for %s point",
+  "gui.mythbound_core.ability_tree.node_unlocked": "Unlocked"
 }

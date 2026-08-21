@@ -3,7 +3,7 @@
   "description": [
     "Fireball description"
   ],
-  "effects": [
+  "components": [
     {
       "type": "mythbound_core:shoot_projectile",
       "projectile": {

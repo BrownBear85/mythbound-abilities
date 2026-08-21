@@ -1,4 +1,4 @@
-package zone.bonker.mythbound_core.core.ability_effect;
+package zone.bonker.mythbound_core.core.ability.component;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -15,14 +15,14 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 
-public class ShootProjectileEffect extends MythboundEffect {
-    public static final MapCodec<ShootProjectileEffect> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+public class ShootProjectileComponent extends AbilityComponent {
+    public static final MapCodec<ShootProjectileComponent> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
             CompoundTag.CODEC.fieldOf("projectile").forGetter(o -> o.projectile),
             Codec.FLOAT.fieldOf("velocity").forGetter(o -> o.velocity),
             Codec.FLOAT.optionalFieldOf("loft", 0.0F).forGetter(o -> o.loft),
             Codec.FLOAT.optionalFieldOf("spread", 0.0F).forGetter(o -> o.spread),
             Codec.FLOAT.optionalFieldOf("count", 1.0F).forGetter(o -> o.count)
-    ).apply(inst, ShootProjectileEffect::new));
+    ).apply(inst, ShootProjectileComponent::new));
 
     private final CompoundTag projectile;
     private final float velocity;
@@ -30,7 +30,7 @@ public class ShootProjectileEffect extends MythboundEffect {
     private final float spread;
     private final float count;
 
-    public ShootProjectileEffect(CompoundTag projectile, float velocity, float loft, float spread, float count) {
+    public ShootProjectileComponent(CompoundTag projectile, float velocity, float loft, float spread, float count) {
         this.projectile = projectile;
         this.velocity = velocity;
         this.loft = loft;
@@ -39,7 +39,7 @@ public class ShootProjectileEffect extends MythboundEffect {
     }
 
     @Override
-    public MapCodec<? extends MythboundEffect> codec() {
+    public MapCodec<? extends AbilityComponent> codec() {
         return CODEC;
     }
 

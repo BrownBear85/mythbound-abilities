@@ -22,9 +22,11 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
-import zone.bonker.mythbound_core.CharacterModelExtensions;
 import zone.bonker.mythbound_core.MythboundCore;
-import zone.bonker.mythbound_core.core.Ability;
+import zone.bonker.mythbound_core.client.gui.AbilityTreesScreen;
+import zone.bonker.mythbound_core.client.gui.RefreshWithCharacterBuild;
+import zone.bonker.mythbound_core.client.model.CharacterModelExtensions;
+import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.ModelProperties;
 import zone.bonker.mythbound_core.core.Race;
@@ -75,7 +77,13 @@ public class MythboundCoreClient {
                 .then(Commands.literal("bind")
                         .then(Commands.argument("ability", MythboundRegistryArgument.ability())
                                 .suggests(MythboundRegistryArgument.SUGGEST_UNLOCKED_ABILITIES)
-                                .executes(MythboundCoreClient::startBinding))));
+                                .executes(MythboundCoreClient::startBinding)))
+                .then(Commands.literal("ability_tree")
+                        .executes(context -> {
+                            if (CharacterBuild.get(Minecraft.getInstance().player).getCharacterClass() != null)
+                            Minecraft.getInstance().setScreen(new AbilityTreesScreen(CharacterBuild.get(Minecraft.getInstance().player)));
+                            return 1;
+                        })));
     }
 
     //// COMMANDS
@@ -145,5 +153,11 @@ public class MythboundCoreClient {
         }
 
         return (EntityRenderer<T>) map.get(race.modelProperties());
+    }
+
+    public static void refreshCurrentScreen(CharacterBuild characterBuild) {
+        if (Minecraft.getInstance().screen instanceof RefreshWithCharacterBuild refreshScreen) {
+            refreshScreen.refreshWidgets(characterBuild);
+        }
     }
 }

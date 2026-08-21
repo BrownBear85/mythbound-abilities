@@ -10,7 +10,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import zone.bonker.mythbound_core.MythboundCore;
-import zone.bonker.mythbound_core.core.Ability;
+import zone.bonker.mythbound_core.core.ability.Ability;
 
 public record S2CEntityAbilityPacket(int entityId, ResourceLocation abilityId) implements CustomPacketPayload {
     public static final Type<S2CEntityAbilityPacket> TYPE = new Type<>(MythboundCore.identifier("s2c_ability_cast"));
