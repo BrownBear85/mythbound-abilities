@@ -1,4 +1,4 @@
-package zone.bonker.mythbound_core.client.gui;
+package zone.bonker.mythbound_core.client.gui.screen.ability_tree;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;

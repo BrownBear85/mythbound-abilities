@@ -11,7 +11,7 @@ import zone.bonker.mythbound_core.client.model.ExtendedPlayerModel;
 import zone.bonker.mythbound_core.client.MythboundCoreClient;
 
 @Mixin(PlayerRenderer.class)
-public class PlayerRendererMixin {
+public abstract class PlayerRendererMixin {
     @Redirect(method = "<init>", at = @At(value = "NEW", target = "(Lnet/minecraft/client/model/geom/ModelPart;Z)Lnet/minecraft/client/model/PlayerModel;"))
     private static <T extends LivingEntity> PlayerModel<T> redirect(ModelPart root, boolean slim) {
         return MythboundCoreClient.CURRENT_MODEL_PROPERTIES == null

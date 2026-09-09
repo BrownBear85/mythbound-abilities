@@ -1,4 +1,4 @@
-package zone.bonker.mythbound_core.client.gui;
+package zone.bonker.mythbound_core.client.gui.screen.ability_tree;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
@@ -23,10 +23,8 @@ public class AbilityTreesScreen extends Screen implements RefreshWithCharacterBu
     public static final int WINDOW_INSIDE_HEIGHT = WINDOW_HEIGHT - WINDOW_INSIDE_X - WINDOW_INSIDE_Y;
     private static final int WINDOW_TITLE_X = 8;
     private static final int WINDOW_TITLE_Y = 6;
-    private static final double SCROLL_SPEED = 16.0;
 
-    public static final int WIDGET_WIDTH = 32;
-    public static final int WIDGET_HEIGHT = 32;
+    private static final double SCROLL_SPEED = 16.0;
 
     public static final ResourceLocation TEXTURE = MythboundCore.identifier("textures/gui/ability_tree_window.png");
 

@@ -1,24 +1,24 @@
-package zone.bonker.mythbound_core.client.gui;
+package zone.bonker.mythbound_core.client.gui.screen.ability_tree;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
+import zone.bonker.mythbound_core.client.MythboundRendering;
 import zone.bonker.mythbound_core.core.NamedAndDescribed;
 import zone.bonker.mythbound_core.core.ability.AbilityTree;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class AbilityTreeWidget extends AbilityTreePanel {
     private final boolean mainAbilityTree;
     private final NamedAndDescribed owner;
     private final List<AbilityWidget> abilities = new ArrayList<>();
-    private Supplier<Integer> pointGetter = () -> 0;
+    @Nullable
+    private CharacterBuild characterBuild;
 
     public AbilityTreeWidget(NamedAndDescribed owner, AbilityTree abilityTree, boolean mainAbilityTree) {
         super(!mainAbilityTree);
@@ -31,8 +31,8 @@ public class AbilityTreeWidget extends AbilityTreePanel {
             AbilityWidget widget = new AbilityWidget(abilityTree, node, mainAbilityTree);
             abilities.add(widget);
 
-            width = Math.max(width, widget.getX() + AbilityTreesScreen.WIDGET_WIDTH);
-            height = Math.max(height, widget.getY() + AbilityTreesScreen.WIDGET_HEIGHT);
+            width = Math.max(width, widget.getX() + AbilityWidget.SIZE);
+            height = Math.max(height, widget.getY() + AbilityWidget.SIZE);
         }
     }
 
@@ -57,27 +57,23 @@ public class AbilityTreeWidget extends AbilityTreePanel {
     public void drawAbove(GuiGraphics guiGraphics, double mouseX, double mouseY) {
         super.drawAbove(guiGraphics, mouseX, mouseY);
 
+        // Title
         guiGraphics.drawCenteredString(Minecraft.getInstance().font, owner.name(), getWidth() / 2, 4, 0xFFEDEDED);
 
-        Font font = Minecraft.getInstance().font;
-        String str = String.valueOf(pointGetter.get());
-        int x = (getWidth() - font.width(str)) / 2;
-        int y = 16;
-        int borderColor = 0x000000;
-        int textColor = 0xFFFFFF00;
-        guiGraphics.drawString(font, str, x + 1, y, borderColor, false);
-        guiGraphics.drawString(font, str, x - 1, y, borderColor, false);
-        guiGraphics.drawString(font, str, x, y + 1, borderColor, false);
-        guiGraphics.drawString(font, str, x, y - 1, borderColor, false);
-        guiGraphics.drawString(font, str, x, y, textColor, false);
+        if (characterBuild != null) {
+            // Point count
+            int points = mainAbilityTree ? characterBuild.getClassUnlockPoints() : characterBuild.getSubclassUnlockPoints();
+            MythboundRendering.drawCenteredOutlinedString(guiGraphics, Minecraft.getInstance().font,
+                    String.valueOf(points), getWidth() / 2, 16, 0xFFFFFF00, 0x000000);
+        }
     }
 
     @Override
     public void refreshWidgets(CharacterBuild characterBuild) {
-        pointGetter = mainAbilityTree ? characterBuild::getClassUnlockPoints : characterBuild::getSubclassUnlockPoints;
+        this.characterBuild = characterBuild;
 
         for (AbilityWidget widget : abilities) {
-            widget.refreshStatus(characterBuild, pointGetter);
+            widget.refreshStatus(characterBuild);
         }
     }
 

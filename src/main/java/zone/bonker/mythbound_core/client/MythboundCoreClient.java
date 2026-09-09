@@ -20,11 +20,13 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import zone.bonker.mythbound_core.MythboundCore;
-import zone.bonker.mythbound_core.client.gui.AbilityTreesScreen;
-import zone.bonker.mythbound_core.client.gui.RefreshWithCharacterBuild;
+import zone.bonker.mythbound_core.client.gui.overlay.AbilityOverlay;
+import zone.bonker.mythbound_core.client.gui.screen.ability_tree.AbilityTreesScreen;
+import zone.bonker.mythbound_core.client.gui.screen.ability_tree.RefreshWithCharacterBuild;
 import zone.bonker.mythbound_core.client.model.CharacterModelExtensions;
 import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.CharacterClass;
@@ -55,6 +57,7 @@ public class MythboundCoreClient {
     public MythboundCoreClient(IEventBus modEventBus, ModContainer container) {
         modEventBus.addListener(this::clientSetup);
         modEventBus.addListener(this::addEntityLayers);
+        modEventBus.addListener(this::registerGuiLayers);
 
         NeoForge.EVENT_BUS.addListener(this::registerClientCommands);
     }
@@ -62,7 +65,7 @@ public class MythboundCoreClient {
     //// EVENTS
 
     private void clientSetup(FMLClientSetupEvent event) {
-        CharacterModelExtensions.reload();
+        CharacterModelExtensions.reload(); // TODO: check if reloading here is necessary
     }
 
     private void addEntityLayers(EntityRenderersEvent.AddLayers event) {
@@ -70,6 +73,10 @@ public class MythboundCoreClient {
         SLIM_RENDERER_MAP.clear();
         CharacterModelExtensions.reload();
         CAPTURED_CONTEXT = event.getContext();
+    }
+
+    private void registerGuiLayers(RegisterGuiLayersEvent event) {
+        event.registerAboveAll(AbilityOverlay.ID, new AbilityOverlay());
     }
 
     private void registerClientCommands(RegisterClientCommandsEvent event) {
@@ -80,8 +87,9 @@ public class MythboundCoreClient {
                                 .executes(MythboundCoreClient::startBinding)))
                 .then(Commands.literal("ability_tree")
                         .executes(context -> {
-                            if (CharacterBuild.get(Minecraft.getInstance().player).getCharacterClass() != null)
-                            Minecraft.getInstance().setScreen(new AbilityTreesScreen(CharacterBuild.get(Minecraft.getInstance().player)));
+                            if (Minecraft.getInstance().player != null && CharacterBuild.get(Minecraft.getInstance().player).getCharacterClass() != null) {
+                                Minecraft.getInstance().setScreen(new AbilityTreesScreen(CharacterBuild.get(Minecraft.getInstance().player)));
+                            }
                             return 1;
                         })));
     }

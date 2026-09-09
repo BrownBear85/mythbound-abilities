@@ -16,7 +16,6 @@ import zone.bonker.mythbound_core.client.MythboundCoreClient;
 import zone.bonker.mythbound_core.core.*;
 import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.ability.AbilityBinding;
-import zone.bonker.mythbound_core.core.ability.AbilityTree;
 import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;
 
 import javax.annotation.Nullable;
@@ -174,6 +173,9 @@ public class CharacterBuild implements OwnedAttachment {
         if (race != null) {
             race.initialize(entity);
         }
+
+        refreshDimensions(entity);
+
         return true;
     }
 
@@ -202,6 +204,9 @@ public class CharacterBuild implements OwnedAttachment {
             subclassId = characterClass.subclasses().keySet().stream().findAny().orElse(NONE);
             save();
         }
+
+        refreshDimensions(entity);
+
         return true;
     }
 
@@ -240,18 +245,19 @@ public class CharacterBuild implements OwnedAttachment {
         }
     }
 
-    public boolean removeAbility(Ability ability) {
+    public void removeAbility(Ability ability) {
         if (!abilities.remove(ability.getId())) {
-            return false;
+            return;
         }
+
+        bindings.remove(ability.getId());
 
         ability.deinitialize(entity);
         save();
-        return true;
     }
 
     public void setAbilityBinding(ResourceLocation id, AbilityBinding binding) {
-        if (!abilities.contains(id) || binding.equals(bindings.get(id))) {
+        if (!abilities.contains(id)) {
             return;
         }
 

@@ -16,23 +16,63 @@ import zone.bonker.mythbound_core.networking.S2CEntityAbilityPacket;
 
 import java.util.List;
 
-public record Ability(Component name, List<Component> rawDescription, List<Component> description,
-                      List<AbilityComponent> components, AttributeList attributes) implements NamedAndDescribed {
+public final class Ability implements NamedAndDescribed {
+
+    public static final Codec<Ability> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+            MythboundSerialization.LENIENT_COMPONENT_CODEC.fieldOf("name").forGetter(o -> o.name),
+            MythboundSerialization.LENIENT_COMPONENT_CODEC.listOf().fieldOf("description").forGetter(o -> o.rawDescription),
+            AbilityComponent.DIRECT_CODEC.listOf().optionalFieldOf("components", List.of()).forGetter(o -> o.components),
+            AttributeList.CODEC.optionalFieldOf("attributes", AttributeList.EMPTY).forGetter(o -> o.attributes)
+    ).apply(inst, Ability::new));
+
+    private final Component name;
+    private final List<Component> rawDescription;
+    private final List<Component> description;
+    private final List<AbilityComponent> components;
+    private final AttributeList attributes;
+    private ResourceLocation id;
+    private ResourceLocation texture;
 
     public Ability(Component name, List<Component> description, List<AbilityComponent> components,
                    AttributeList attributes) {
-        this(name, description, description.stream().map(line -> (Component) line.copy().withStyle(ChatFormatting.GRAY)).toList(), components, attributes);
+        this.name = name;
+        this.rawDescription = description;
+        this.description = description.stream().map(line -> (Component) line.copy().withStyle(ChatFormatting.GRAY)).toList();
+        this.components = components;
+        this.attributes = attributes;
     }
 
-    public static final Codec<Ability> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-            MythboundSerialization.LENIENT_COMPONENT_CODEC.fieldOf("name").forGetter(Ability::name),
-            MythboundSerialization.LENIENT_COMPONENT_CODEC.listOf().fieldOf("description").forGetter(Ability::rawDescription),
-            AbilityComponent.DIRECT_CODEC.listOf().optionalFieldOf("components", List.of()).forGetter(Ability::components),
-            AttributeList.CODEC.optionalFieldOf("attributes", AttributeList.EMPTY).forGetter(Ability::attributes)
-    ).apply(inst, Ability::new));
+    @Override
+    public Component name() {
+        return name;
+    }
+
+    @Override
+    public List<Component> description() {
+        return description;
+    }
+
+    public List<AbilityComponent> components() {
+        return components;
+    }
+
+    public AttributeList attributes() {
+        return attributes;
+    }
 
     public ResourceLocation getId() {
-        return MythboundCore.ABILITIES.getData().inverse().get(this);
+        if (id == null) {
+            id = MythboundCore.ABILITIES.getData().inverse().get(this);
+        }
+        return id;
+    }
+
+    public ResourceLocation getTexture() {
+        if (texture == null) {
+            getId();
+            texture = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "textures/ability/" + id.getPath() + ".png");
+        }
+        return texture;
     }
 
     public void tryCast(LivingEntity caster) {

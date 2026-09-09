@@ -30,5 +30,7 @@
   "gui.mythbound_core.ability_tree.node_cannot_afford": "Costs %s point",
   "gui.mythbound_core.ability_tree.node_click_to_unlock_plural": "Click to unlock for %s points",
   "gui.mythbound_core.ability_tree.node_click_to_unlock": "Click to unlock for %s point",
-  "gui.mythbound_core.ability_tree.node_unlocked": "Unlocked"
+  "gui.mythbound_core.ability_tree.node_unlocked": "Unlocked",
+  "gui.mythbound_core.ability_tree.node_no_bind": "None",
+  "gui.mythbound_core.ability_tree.node_bound": "Bound to %s"
 }

@@ -39,10 +39,6 @@ public record Race(Component name, List<Component> description, AttributeList at
         for (Ability ability : inherentAbilities) {
             data.unlockAbility(ability);
         }
-
-        if (modelProperties.hasCustomHitbox()) {
-            CharacterBuild.refreshDimensions(entity);
-        }
     }
 
     public void deinitialize(LivingEntity entity) {
@@ -51,10 +47,6 @@ public record Race(Component name, List<Component> description, AttributeList at
         CharacterBuild data = CharacterBuild.get(entity);
         for (Ability ability : inherentAbilities) {
             data.removeAbility(ability);
-        }
-
-        if (modelProperties.hasCustomHitbox()) {
-            CharacterBuild.refreshDimensions(entity);
         }
     }
 }

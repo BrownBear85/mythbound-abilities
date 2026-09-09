@@ -8,7 +8,6 @@ import net.minecraft.world.entity.LivingEntity;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability.AbilityTree;
 import zone.bonker.mythbound_core.core.ability.component.AbilityComponent;
-import zone.bonker.mythbound_core.data.CharacterBuild;
 import zone.bonker.mythbound_core.data.MythboundSerialization;
 
 import java.util.List;
@@ -37,18 +36,10 @@ public record CharacterClass(Component name, List<Component> description, Attrib
     public void initialize(LivingEntity entity) {
         attributes.apply(entity, AttributeList.CLASS);
         mainAbilityTree.initialize(entity);
-
-        if (modelProperties.hasCustomHitbox()) {
-            CharacterBuild.refreshDimensions(entity);
-        }
     }
 
     public void deinitialize(LivingEntity entity) {
         attributes.remove(entity, AttributeList.CLASS);
         mainAbilityTree.deinitialize(entity);
-
-        if (modelProperties.hasCustomHitbox()) {
-            CharacterBuild.refreshDimensions(entity);
-        }
     }
 }

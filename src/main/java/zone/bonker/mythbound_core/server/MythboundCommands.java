@@ -66,7 +66,7 @@ public class MythboundCommands {
                         .then(Commands.literal("points")
                                 .then(Commands.argument("class_points", IntegerArgumentType.integer(0))
                                         .then(Commands.argument("subclass_points", IntegerArgumentType.integer(0))
-                                            .executes(MythboundCommands::setPoints))))
+                                            .executes(MythboundCommands::setPoints)))))
                 .then(Commands.literal("info")
                         .then(Commands.literal("race")
                                 .then(Commands.argument("race", MythboundRegistryArgument.race())
@@ -80,8 +80,6 @@ public class MythboundCommands {
                                 .then(Commands.argument("ability", MythboundRegistryArgument.ability())
                                         .suggests(MythboundRegistryArgument.SUGGEST_ALL_ABILITIES)
                                         .executes(context -> sendInfo(context, context.getArgument("ability", Ability.class))))))
-                .then(Commands.literal("reload")
-                        .executes(MythboundCommands::reloadBuild)))
                 .then(Commands.literal("reset")
                         .executes(MythboundCommands::resetBuild)));
     }
@@ -170,67 +168,11 @@ public class MythboundCommands {
         return SUCCESS;
     }
 
-    private static int unlockAbility(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        LivingEntity entity = verifyLivingEntity(context);
-        Ability ability = context.getArgument("ability", Ability.class);
-
-        if (!CharacterBuild.get(entity).unlockAbility(ability)) {
-            context.getSource().sendFailure(Component.translatable("commands." + MythboundCore.MODID + ".already_unlocked"));
-            return FAILURE;
-        } else {
-            context.getSource().sendSuccess(() ->
-                    Component.translatable("commands." + MythboundCore.MODID + ".unlocked_ability", ability.name()), false);
-            return SUCCESS;
-        }
-    }
-
-    private static int removeAbility(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        LivingEntity entity = verifyLivingEntity(context);
-        Ability ability = context.getArgument("ability", Ability.class);
-
-        if (!CharacterBuild.get(entity).removeAbility(ability)) {
-            context.getSource().sendFailure(Component.translatable("commands." + MythboundCore.MODID + ".ability_not_unlocked"));
-            return FAILURE;
-        } else {
-            context.getSource().sendSuccess(() ->
-                    Component.translatable("commands." + MythboundCore.MODID + ".removed_ability", ability.name()), false);
-            return SUCCESS;
-        }
-    }
-
     private static int sendInfo(CommandContext<CommandSourceStack> context, NamedAndDescribed obj) {
         context.getSource().sendSystemMessage(obj.name());
         for (Component line : obj.description()) {
             context.getSource().sendSystemMessage(line);
         }
-        return SUCCESS;
-    }
-
-    private static int reloadBuild(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        LivingEntity entity = verifyLivingEntity(context);
-        CharacterBuild data = CharacterBuild.get(entity);
-
-        Race race = data.getRace();
-        if (race != null) {
-            race.deinitialize(entity);
-            race.initialize(entity);
-        }
-
-        CharacterClass characterClass = data.getCharacterClass();
-        if (characterClass != null) {
-            characterClass.deinitialize(entity);
-            characterClass.initialize(entity);
-        }
-
-        for (ResourceLocation abilityId : data.getUnlockedAbilityIds()) {
-            Ability ability = MythboundCore.ABILITIES.getData().get(abilityId);
-            if (ability != null) {
-                ability.deinitialize(entity);
-                ability.initialize(entity);
-            }
-        }
-
-        context.getSource().sendSuccess(() -> Component.translatable("commands." + MythboundCore.MODID + ".reloaded_build"), false);
         return SUCCESS;
     }
 

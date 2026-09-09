@@ -6,6 +6,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.settings.KeyModifier;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
@@ -17,39 +20,48 @@ import zone.bonker.mythbound_core.networking.C2SCastAbilityPacket;
 import zone.bonker.mythbound_core.networking.C2SSetBindingPacket;
 
 import javax.annotation.Nullable;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
+@EventBusSubscriber
 public class AbilityInputHandler {
     @Nullable
     public static ResourceLocation abilityToBind = null;
     @Nullable
     private static InputConstants.Key pressedKey = null;
 
+    /**
+     * Called from KeyboardHandlerMixin. Returning true will prevent the input from being processed by vanilla.
+      */
     public static boolean keyPressed(int keyCode, int scanCode, int action) {
+        return handleInput(keyCode == InputConstants.KEY_ESCAPE, InputConstants.getKey(keyCode, scanCode), action);
+    }
+
+    @SubscribeEvent
+    public static void mouseClicked(InputEvent.MouseButton.Pre event) {
+        if (handleInput(false, InputConstants.Type.MOUSE.getOrCreate(event.getButton()), event.getAction())) {
+            event.setCanceled(true);
+        }
+    }
+
+    private static boolean handleInput(boolean isEscape, InputConstants.Key key, int action) {
         Player player = Minecraft.getInstance().player;
-        if (player == null || Minecraft.getInstance().screen != null) {
+        if (player == null) {
             abilityToBind = null;
             pressedKey = null;
             return false;
         }
 
-        if (abilityToBind == null && action == GLFW.GLFW_PRESS) {
+        if (abilityToBind == null && action == GLFW.GLFW_PRESS && Minecraft.getInstance().screen == null) {
             Optional<CharacterBuild> optional = CharacterBuild.getExisting(player);
             if (optional.isEmpty()) {
                 return false;
             }
 
-            for (Iterator<Map.Entry<ResourceLocation, AbilityBinding>> iterator = optional.get().getAbilityBindings().entrySet().iterator(); iterator.hasNext(); ) {
-                Map.Entry<ResourceLocation, AbilityBinding> entry = iterator.next();
-                if (AbilityInputHandler.matches(entry.getValue(), keyCode, scanCode) && optional.get().hasAbility(entry.getKey())) {
+            for (Map.Entry<ResourceLocation, AbilityBinding> entry : optional.get().getAbilityBindings().entrySet()) {
+                if (AbilityInputHandler.matches(entry.getValue(), key)) {
                     Ability ability = MythboundCore.ABILITIES.getData().get(entry.getKey());
-                    if (ability == null) {
-                        MythboundCoreClient.LOGGER.warn("{} was bound to an unregistered ability id {}, unbinding",
-                                getDisplayName(entry.getValue()).getString(), entry.getKey());
-                        iterator.remove();
-                    } else {
+                    if (ability != null) {
                         PacketDistributor.sendToServer(new C2SCastAbilityPacket(entry.getKey()));
                     }
                     return false;
@@ -69,15 +81,9 @@ public class AbilityInputHandler {
                 return false;
             }
 
-            InputConstants.Key key = InputConstants.getKey(keyCode, scanCode);
-
             if (action == GLFW.GLFW_PRESS) {
-                if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+                if (isEscape) {
                     PacketDistributor.sendToServer(new C2SSetBindingPacket(abilityToBind, new AbilityBinding(-1, (byte) 0, false, false, false)));
-
-                    player.sendSystemMessage(
-                            Component.translatable("commands." + MythboundCore.MODID + ".unbound_ability",
-                                    ability.name()));
 
                     abilityToBind = null;
                     pressedKey = null;
@@ -98,11 +104,6 @@ public class AbilityInputHandler {
 
                     PacketDistributor.sendToServer(new C2SSetBindingPacket(abilityToBind, binding));
 
-                    player.sendSystemMessage(
-                            Component.translatable("commands." + MythboundCore.MODID + ".bound_ability",
-                                    ability.name(),
-                                    getDisplayName(binding)));
-
                     abilityToBind = null;
                 }
 
@@ -114,8 +115,8 @@ public class AbilityInputHandler {
         return false;
     }
 
-    public static boolean matches(AbilityBinding binding, int keyCode, int scanCode) {
-        return InputConstants.Type.values()[binding.type()].getOrCreate(binding.key()).equals(InputConstants.getKey(keyCode, scanCode))
+    public static boolean matches(AbilityBinding binding, InputConstants.Key key) {
+        return InputConstants.Type.values()[binding.type()].getOrCreate(binding.key()).equals(key)
                 && (!binding.shift() || Screen.hasShiftDown())
                 && (!binding.control() || Screen.hasControlDown())
                 && (!binding.alt() || Screen.hasAltDown());
