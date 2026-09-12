@@ -6,6 +6,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 import zone.bonker.mythbound_core.data.OwnedAttachment;
+import zone.bonker.mythbound_core.data.SpellData;
 
 import java.util.function.Supplier;
 
@@ -17,6 +18,13 @@ public class MythboundAttachmentTypes {
             ATTACHMENT_TYPES.register("character_build", () -> AttachmentType.builder(CharacterBuild::new)
                     .serialize(new OwnedAttachment.Serializer<>(CharacterBuild.CODEC))
                     .sync(new OwnedAttachment.SyncHandler<>(CharacterBuild.NETWORK_CODEC))
+                    .copyOnDeath()
+                    .build());
+
+    public static final Supplier<AttachmentType<SpellData>> SPELL_DATA =
+            ATTACHMENT_TYPES.register("spell_data", () -> AttachmentType.builder(SpellData::new)
+                    .serialize(new OwnedAttachment.Serializer<>(SpellData.CODEC))
+                    .sync(new OwnedAttachment.SyncHandler<>(SpellData.NETWORK_CODEC, (holder, player) -> holder == player))
                     .copyOnDeath()
                     .build());
 }

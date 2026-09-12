@@ -23,6 +23,11 @@ public class MythboundNetworking {
                 S2CSyncRegistriesPacket.CODEC,
                 S2CSyncRegistriesPacket::handle);
 
+        registrar.playToClient(
+                S2CSyncDataFilesPacket.TYPE,
+                S2CSyncDataFilesPacket.CODEC,
+                S2CSyncDataFilesPacket::handle);
+
         // Client to Server
 
         registrar.playToServer(

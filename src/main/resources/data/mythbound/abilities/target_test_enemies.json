@@ -1,0 +1,20 @@
+{
+  "type": "spell",
+  "name": "Target test enemies",
+  "description": [
+    "A test of the targeting system"
+  ],
+  "components": [
+    {
+      "type": "mythbound_core:shoot_projectile",
+      "projectile": {
+        "id": "minecraft:creeper"
+      },
+      "velocity": 0.5
+    }
+  ],
+  "targeting": {
+    "enemies": true,
+    "required": true
+  }
+}

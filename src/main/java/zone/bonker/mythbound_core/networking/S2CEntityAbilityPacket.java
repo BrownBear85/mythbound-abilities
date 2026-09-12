@@ -5,20 +5,20 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability.Ability;
 
-public record S2CEntityAbilityPacket(int entityId, ResourceLocation abilityId) implements CustomPacketPayload {
+public record S2CEntityAbilityPacket(int entityId, ResourceLocation abilityId, int targetId) implements CustomPacketPayload {
     public static final Type<S2CEntityAbilityPacket> TYPE = new Type<>(MythboundCore.identifier("s2c_ability_cast"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CEntityAbilityPacket> CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.VAR_INT, S2CEntityAbilityPacket::entityId,
                     ResourceLocation.STREAM_CODEC, S2CEntityAbilityPacket::abilityId,
+                    ByteBufCodecs.VAR_INT, S2CEntityAbilityPacket::targetId,
                     S2CEntityAbilityPacket::new
             );
 
@@ -35,12 +35,20 @@ public record S2CEntityAbilityPacket(int entityId, ResourceLocation abilityId) i
                 return;
             }
 
-            Entity entity = level.getEntity(entityId);
-            if (!(entity instanceof LivingEntity livingEntity)) {
+            if (!(level.getEntity(entityId) instanceof LivingEntity caster)) {
                 return;
             }
 
-            ability.cast(livingEntity);
+            LivingEntity target = null;
+            if (targetId != -1) {
+                if (level.getEntity(targetId) instanceof LivingEntity livingTarget) {
+                    target = livingTarget;
+                } else {
+                    return;
+                }
+            }
+
+            ability.onCast(caster, target);
         });
     }
 }

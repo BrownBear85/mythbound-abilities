@@ -1,7 +1,9 @@
 package zone.bonker.mythbound_core.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -18,13 +20,15 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
-import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.*;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.common.NeoForge;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.client.gui.overlay.AbilityOverlay;
+import zone.bonker.mythbound_core.client.gui.overlay.TargetingOverlay;
+import zone.bonker.mythbound_core.client.gui.overlay.UnitsOverlay;
 import zone.bonker.mythbound_core.client.gui.screen.ability_tree.AbilityTreesScreen;
 import zone.bonker.mythbound_core.client.gui.screen.ability_tree.RefreshWithCharacterBuild;
 import zone.bonker.mythbound_core.client.model.CharacterModelExtensions;
@@ -54,12 +58,21 @@ public class MythboundCoreClient {
     @Nullable
     public static ModelProperties CURRENT_MODEL_PROPERTIES = null;
 
+    // Keybinds
+    public static final KeyMapping TARGETING_KEYBIND = new KeyMapping("key." + MythboundCore.MODID + ".target",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_LEFT_ALT,
+            MythboundCore.MODID);
+
     public MythboundCoreClient(IEventBus modEventBus, ModContainer container) {
         modEventBus.addListener(this::clientSetup);
         modEventBus.addListener(this::addEntityLayers);
         modEventBus.addListener(this::registerGuiLayers);
+        modEventBus.addListener(this::registerKeyMappings);
 
         NeoForge.EVENT_BUS.addListener(this::registerClientCommands);
+        NeoForge.EVENT_BUS.addListener(this::keyInput);
     }
 
     //// EVENTS
@@ -76,8 +89,22 @@ public class MythboundCoreClient {
     }
 
     private void registerGuiLayers(RegisterGuiLayersEvent event) {
-        event.registerAboveAll(AbilityOverlay.ID, new AbilityOverlay());
+        event.registerAboveAll(TargetingOverlay.ID, new TargetingOverlay());
+        event.registerAbove(TargetingOverlay.ID, AbilityOverlay.ID, new AbilityOverlay());
+        event.registerAbove(AbilityOverlay.ID, UnitsOverlay.ID, new UnitsOverlay());
     }
+
+    private void registerKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(TARGETING_KEYBIND);
+    }
+
+    private void keyInput(InputEvent.Key event) {
+        while (TARGETING_KEYBIND.consumeClick()) {
+            ClientSpellTargeting.pressedKeybind();
+        }
+    }
+
+    //// COMMANDS
 
     private void registerClientCommands(RegisterClientCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("mythbound")
@@ -93,8 +120,6 @@ public class MythboundCoreClient {
                             return 1;
                         })));
     }
-
-    //// COMMANDS
 
     private static int startBinding(CommandContext<CommandSourceStack> context) {
         if (Minecraft.getInstance().player == null) {

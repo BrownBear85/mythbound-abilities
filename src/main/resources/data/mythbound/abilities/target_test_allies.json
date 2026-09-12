@@ -1,0 +1,20 @@
+{
+  "type": "spell",
+  "name": "Target test allies",
+  "description": [
+    "A test of the targeting system"
+  ],
+  "components": [
+    {
+      "type": "mythbound_core:shoot_projectile",
+      "projectile": {
+        "id": "minecraft:chicken"
+      },
+      "velocity": 0.5
+    }
+  ],
+  "targeting": {
+    "allies": true,
+    "required": true
+  }
+}

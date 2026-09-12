@@ -1,0 +1,20 @@
+{
+  "type": "spell",
+  "name": "Target test self",
+  "description": [
+    "A test of the targeting system"
+  ],
+  "components": [
+    {
+      "type": "mythbound_core:shoot_projectile",
+      "projectile": {
+        "id": "minecraft:cow"
+      },
+      "velocity": 0.5
+    }
+  ],
+  "targeting": {
+    "self": true,
+    "required": true
+  }
+}

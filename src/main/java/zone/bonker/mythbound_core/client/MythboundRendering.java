@@ -27,4 +27,12 @@ public class MythboundRendering {
         guiGraphics.fill(0, -width / 2, Mth.ceil(length), width / 2, color);
         guiGraphics.pose().popPose();
     }
+
+    public static void fillF(GuiGraphics guiGraphics, float x0, float y0, float x1, float y1, int color) {
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(x0, y0, 0);
+        guiGraphics.pose().scale(x1 - x0, y1 - y0, 1);
+        guiGraphics.fill(0, 0, 1, 1, color);
+        guiGraphics.pose().popPose();
+    }
 }

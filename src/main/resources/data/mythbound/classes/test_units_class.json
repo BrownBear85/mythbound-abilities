@@ -1,0 +1,43 @@
+{
+  "name": "Test class",
+  "description": [
+    "A class for testing"
+  ],
+  "main_ability_tree": {
+    "nodes": [
+      {
+        "ability": "mythbound:units_test",
+        "row": 1,
+        "column": 2,
+        "cost": 0
+      },
+      {
+        "ability": "mythbound:fireball",
+        "row": 3,
+        "column": 2,
+        "cost": 0
+      },
+      {
+        "ability": "mythbound:target_test_enemies",
+        "row": 5,
+        "column": 1,
+        "cost": 0
+      },
+      {
+        "ability": "mythbound:target_test_allies",
+        "row": 5,
+        "column": 2,
+        "cost": 0
+      },
+      {
+        "ability": "mythbound:target_test_self",
+        "row": 5,
+        "column": 3,
+        "cost": 0
+      }
+    ]
+  },
+  "subclasses": {
+
+  }
+}

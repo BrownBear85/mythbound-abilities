@@ -13,10 +13,13 @@ import org.slf4j.Logger;
 import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.Race;
+import zone.bonker.mythbound_core.core.ability.MagicUnitDefinition;
+import zone.bonker.mythbound_core.data.MythboundReloadableDataFiles;
 import zone.bonker.mythbound_core.data.MythboundReloadableRegistries;
 import zone.bonker.mythbound_core.data.ReloadableJsonRegistry;
 import zone.bonker.mythbound_core.init.AbilityComponentSerializers;
 import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;
+import zone.bonker.mythbound_core.init.MythboundTriggers;
 import zone.bonker.mythbound_core.server.MythboundCommands;
 
 @Mod(MythboundCore.MODID)
@@ -24,16 +27,20 @@ public class MythboundCore {
     public static final String MODID = "mythbound_core";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final MythboundReloadableRegistries REGISTRIES = new MythboundReloadableRegistries();
+    public static MythboundReloadableRegistries REGISTRIES;
     public static final ReloadableJsonRegistry<CharacterClass> CLASSES = new ReloadableJsonRegistry<>("classes", CharacterClass.CODEC);
     public static final ReloadableJsonRegistry<Race> RACES = new ReloadableJsonRegistry<>("races", Race.CODEC);
     public static final ReloadableJsonRegistry<Ability> ABILITIES = new ReloadableJsonRegistry<>("abilities", Ability.CODEC);
+    public static final ReloadableJsonRegistry<MagicUnitDefinition> MAGIC_UNITS = new ReloadableJsonRegistry<>("magic_units", MagicUnitDefinition.CODEC);
+
+    public static MythboundReloadableDataFiles DATA_FILES;
 
     public MythboundCore(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::newRegistries);
 
         NeoForge.EVENT_BUS.addListener(this::addReloadListeners);
 
+        MythboundTriggers.REGISTER.register(modEventBus);
         AbilityComponentSerializers.REGISTER.register(modEventBus);
 
         MythboundAttachmentTypes.ATTACHMENT_TYPES.register(modEventBus);
@@ -48,13 +55,18 @@ public class MythboundCore {
 
     private void newRegistries(NewRegistryEvent event) {
         event.register(AbilityComponentSerializers.REGISTRY);
+        event.register(MythboundTriggers.REGISTRY);
     }
 
     private void addReloadListeners(AddReloadListenerEvent event) {
-        REGISTRIES.setServerResources(event.getServerResources());
-        REGISTRIES.addRegistry(ABILITIES); // Load abilities first since they don't need to know about classes or races.
-        REGISTRIES.addRegistry(CLASSES); // Load classes second since they need to know about abilities but usually don't need races.
-        REGISTRIES.addRegistry(RACES); // Load races last since they definitely need both classes and abilities to be loaded.
+        REGISTRIES = new MythboundReloadableRegistries(event.getServerResources());
+        REGISTRIES.addRegistry(MAGIC_UNITS);
+        REGISTRIES.addRegistry(ABILITIES); // Abilities must load after magic units.
+        REGISTRIES.addRegistry(CLASSES); // Classes must load after abilities.
+        REGISTRIES.addRegistry(RACES); // Races must load after classes and races.
         event.addListener(REGISTRIES);
+
+        DATA_FILES = new MythboundReloadableDataFiles(event.getServerResources());
+        event.addListener(DATA_FILES);
     }
 }

@@ -1,4 +1,5 @@
 {
+  "type": "passive",
   "name": "Test 1",
   "description": [
     "The description of Test 1"

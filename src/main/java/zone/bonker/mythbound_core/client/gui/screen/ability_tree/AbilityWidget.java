@@ -1,6 +1,5 @@
 package zone.bonker.mythbound_core.client.gui.screen.ability_tree;
 
-import com.google.common.base.Predicates;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -24,8 +23,6 @@ public class AbilityWidget implements HoverableClickable {
     public static final int ICON_SIZE = 16;
     public static final int PADDING = (SIZE - ICON_SIZE) / 2;
 
-    private static final ResourceLocation TEXTURE = MythboundCore.identifier("textures/gui/ability_widget.png");
-
     private final AbilityTree abilityTree;
     private final AbilityTree.Node node;
     private final boolean mainAbilityTree;
@@ -39,7 +36,7 @@ public class AbilityWidget implements HoverableClickable {
         this.abilityTree = abilityTree;
         this.node = node;
         this.mainAbilityTree = mainAbilityTree;
-        this.ability = MythboundCore.ABILITIES.getData().get(node.abilityId());
+        this.ability = MythboundCore.ABILITIES.getOrThrow(node.abilityId());
         this.x = node.column() * SIZE;
         this.y = node.row() * SIZE;
     }
@@ -69,8 +66,7 @@ public class AbilityWidget implements HoverableClickable {
             case LOCKED -> {
                 List<Ability> requiredAbilities = node.requiredAbilities().stream()
                         .filter(requiredId -> !characterBuild.hasAbility(requiredId))
-                        .map(MythboundCore.ABILITIES.getData()::get)
-                        .filter(Predicates.notNull())
+                        .map(MythboundCore.ABILITIES::getOrThrow)
                         .toList();
 
                 if (requiredAbilities.isEmpty()) {
@@ -143,7 +139,7 @@ public class AbilityWidget implements HoverableClickable {
     }
 
     public void renderSelf(GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        guiGraphics.blit(TEXTURE,
+        guiGraphics.blit(ability.type().getWidgetTexture(),
                 x,
                 y,
                 status.ordinal() * SIZE,

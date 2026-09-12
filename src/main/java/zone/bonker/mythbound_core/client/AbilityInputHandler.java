@@ -3,8 +3,10 @@ package zone.bonker.mythbound_core.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -45,7 +47,7 @@ public class AbilityInputHandler {
     }
 
     private static boolean handleInput(boolean isEscape, InputConstants.Key key, int action) {
-        Player player = Minecraft.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             abilityToBind = null;
             pressedKey = null;
@@ -59,26 +61,31 @@ public class AbilityInputHandler {
             }
 
             for (Map.Entry<ResourceLocation, AbilityBinding> entry : optional.get().getAbilityBindings().entrySet()) {
-                if (AbilityInputHandler.matches(entry.getValue(), key)) {
-                    Ability ability = MythboundCore.ABILITIES.getData().get(entry.getKey());
-                    if (ability != null) {
-                        PacketDistributor.sendToServer(new C2SCastAbilityPacket(entry.getKey()));
-                    }
+                if (!AbilityInputHandler.matches(entry.getValue(), key)) {
+                    continue;
+                }
+
+                Ability ability = MythboundCore.ABILITIES.getOrThrow(entry.getKey());
+                if (!ability.cost().canCast(player)) {
                     return false;
                 }
+
+                LivingEntity target = null;
+                if (!ability.targeting().isEmpty()) {
+                    target = ClientSpellTargeting.getTargetForAbility(player, ability);
+                    if (target == null && ability.targeting().targetRequired()) {
+                        return false;
+                    }
+                }
+
+                PacketDistributor.sendToServer(new C2SCastAbilityPacket(entry.getKey(), target == null ? -1 : target.getId()));
+                return true;
             }
         }
 
         if (abilityToBind != null) {
             if (action == GLFW.GLFW_REPEAT) {
                 return true;
-            }
-
-            Ability ability = MythboundCore.ABILITIES.getData().get(abilityToBind);
-            if (ability == null) {
-                abilityToBind = null;
-                pressedKey = null;
-                return false;
             }
 
             if (action == GLFW.GLFW_PRESS) {

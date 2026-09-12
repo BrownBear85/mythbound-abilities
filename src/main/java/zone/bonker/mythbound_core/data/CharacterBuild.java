@@ -21,7 +21,7 @@ import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class CharacterBuild implements OwnedAttachment {
+public class CharacterBuild extends OwnedAttachment {
     public static final ResourceLocation NONE = ResourceLocation.withDefaultNamespace("none");
 
     public static final Codec<CharacterBuild> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -52,24 +52,27 @@ public class CharacterBuild implements OwnedAttachment {
     private final List<ResourceLocation> abilities = new ArrayList<>();
     private final Map<ResourceLocation, AbilityBinding> bindings = new HashMap<>();
 
-    private LivingEntity entity;
-
     public CharacterBuild(IAttachmentHolder holder) {
-        if (!(holder instanceof LivingEntity livingEntity)) {
-            throw new IllegalArgumentException("CharacterBuilder can only be attached to LivingEntities");
-        }
-        setOwner(livingEntity);
+        super(holder);
     }
 
-    public CharacterBuild(ResourceLocation raceId, ResourceLocation classId, ResourceLocation subclassId,
+    private CharacterBuild(ResourceLocation raceId, ResourceLocation classId, ResourceLocation subclassId,
                           int classUnlockPoints, int subclassUnlockPoints, List<ResourceLocation> abilities,
                           Map<ResourceLocation, AbilityBinding> bindings) {
-        this.raceId = raceId;
-        this.classId = classId;
-        this.subclassId = subclassId;
+        this.raceId = verify(raceId, MythboundCore.RACES);
+        this.classId = verify(classId, MythboundCore.CLASSES);
+        this.subclassId = verifySubclass(classId, subclassId);
         this.classUnlockPoints = classUnlockPoints;
         this.subclassUnlockPoints = subclassUnlockPoints;
+
+        for (ResourceLocation abilityId : abilities) {
+            verify(abilityId, MythboundCore.ABILITIES);
+        }
         this.abilities.addAll(abilities);
+
+        for (ResourceLocation abilityId : bindings.keySet()) {
+            verify(abilityId, MythboundCore.ABILITIES);
+        }
         this.bindings.putAll(bindings);
     }
 
@@ -103,12 +106,12 @@ public class CharacterBuild implements OwnedAttachment {
 
     @Nullable
     public Race getRace() {
-        return raceId.equals(NONE) ? null : MythboundCore.RACES.getData().get(raceId);
+        return raceId.equals(NONE) ? null : MythboundCore.RACES.getOrThrow(raceId);
     }
 
     @Nullable
     public CharacterClass getCharacterClass() {
-        return classId.equals(NONE) ? null : MythboundCore.CLASSES.getData().get(classId);
+        return classId.equals(NONE) ? null : MythboundCore.CLASSES.getOrThrow(classId);
     }
 
     public Subclass getSubclass() {
@@ -120,7 +123,7 @@ public class CharacterBuild implements OwnedAttachment {
         return characterClass == null ? null : characterClass.subclasses().get(subclassId);
     }
 
-    public List<ResourceLocation> getUnlockedAbilityIds() {
+    public List<ResourceLocation> getAbilities() {
         return abilities;
     }
 
@@ -129,7 +132,7 @@ public class CharacterBuild implements OwnedAttachment {
     }
 
     public boolean hasAbility(ResourceLocation id) {
-        return entity.getData(MythboundAttachmentTypes.CHARACTER_BUILD).abilities.contains(id);
+        return abilities.contains(id);
     }
 
     public int getClassUnlockPoints() {
@@ -143,12 +146,7 @@ public class CharacterBuild implements OwnedAttachment {
     //// SETTERS
 
     public void save() {
-        entity.setData(MythboundAttachmentTypes.CHARACTER_BUILD, this);
-    }
-
-    @Override
-    public void setOwner(LivingEntity entity) {
-        this.entity = entity;
+        owner().setData(MythboundAttachmentTypes.CHARACTER_BUILD, this);
     }
 
     public boolean setRace(@Nullable Race race) {
@@ -159,7 +157,7 @@ public class CharacterBuild implements OwnedAttachment {
 
         Race oldRace = getRace();
         if (oldRace != null) {
-            oldRace.deinitialize(entity);
+            oldRace.deinitialize(owner());
         }
 
         CharacterClass characterClass = getCharacterClass();
@@ -171,10 +169,10 @@ public class CharacterBuild implements OwnedAttachment {
         save();
 
         if (race != null) {
-            race.initialize(entity);
+            race.initialize(owner());
         }
 
-        refreshDimensions(entity);
+        refreshDimensions(owner());
 
         return true;
     }
@@ -192,20 +190,20 @@ public class CharacterBuild implements OwnedAttachment {
 
         CharacterClass oldClass = getCharacterClass();
         if (oldClass != null) {
-            oldClass.deinitialize(entity);
+            oldClass.deinitialize(owner());
         }
 
         this.classId = id;
         save();
 
         if (characterClass != null) {
-            characterClass.initialize(entity);
+            characterClass.initialize(owner());
 
             subclassId = characterClass.subclasses().keySet().stream().findAny().orElse(NONE);
             save();
         }
 
-        refreshDimensions(entity);
+        refreshDimensions(owner());
 
         return true;
     }
@@ -218,7 +216,7 @@ public class CharacterBuild implements OwnedAttachment {
         abilities.add(ability.getId());
         save();
 
-        ability.initialize(entity);
+        ability.initialize(owner());
         return true;
     }
 
@@ -245,14 +243,14 @@ public class CharacterBuild implements OwnedAttachment {
         }
     }
 
-    public void removeAbility(Ability ability) {
-        if (!abilities.remove(ability.getId())) {
+    public void removeAbility(ResourceLocation abilityId) {
+        if (!abilities.remove(abilityId)) {
             return;
         }
 
-        bindings.remove(ability.getId());
+        bindings.remove(abilityId);
 
-        ability.deinitialize(entity);
+        MythboundCore.ABILITIES.getOrThrow(abilityId).deinitialize(owner());
         save();
     }
 
@@ -275,6 +273,29 @@ public class CharacterBuild implements OwnedAttachment {
     }
 
     //// MISC METHODS
+
+    private static <T> ResourceLocation verify(ResourceLocation id, ReloadableJsonRegistry<T> registry) {
+        if (id.equals(NONE)) {
+            return id;
+        }
+        registry.getOrThrow(id);
+        return id;
+    }
+
+    private static ResourceLocation verifySubclass(ResourceLocation classId, ResourceLocation subclassId) {
+        if (subclassId.equals(NONE)) {
+            return subclassId;
+        }
+
+        if (classId.equals(NONE)) {
+            throw new IllegalArgumentException("Class " + classId + " has no subclass with id " + subclassId);
+        }
+        CharacterClass characterClass = MythboundCore.CLASSES.getOrThrow(classId);
+        if (!characterClass.subclasses().containsKey(subclassId)) {
+            throw new IllegalArgumentException("Class " + classId + " has no subclass with id " + subclassId);
+        }
+        return subclassId;
+    }
 
     @Override
     public void onUpdatedOnClient() {

@@ -25,16 +25,15 @@ public class MythboundReloadableRegistries extends SimplePreparableReloadListene
     public static final Gson GSON = new GsonBuilder().setLenient().create();
 
     private final Map<String, ReloadableJsonRegistry<?>> registries = new LinkedHashMap<>();
-    private ReloadableServerResources serverResources;
+    private final ReloadableServerResources serverResources;
     private Map<String, Map<ResourceLocation, JsonElement>> lastData;
+
+    public MythboundReloadableRegistries(ReloadableServerResources serverResources) {
+        this.serverResources = serverResources;
+    }
 
     public void addRegistry(ReloadableJsonRegistry<?> registry) {
         registries.put(registry.getDirectory(), registry);
-    }
-
-    public void setServerResources(ReloadableServerResources serverResources) {
-        this.serverResources = serverResources;
-        this.registries.clear();
     }
 
     public ReloadableJsonRegistry<?> getRegistry(String directory) {

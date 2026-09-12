@@ -7,13 +7,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability.Ability;
-import zone.bonker.mythbound_core.core.ability.component.AbilityComponent;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 import zone.bonker.mythbound_core.data.MythboundSerialization;
 
 import java.util.List;
 
-public record Race(Component name, List<Component> description, AttributeList attributes, List<AbilityComponent> components,
+public record Race(Component name, List<Component> description, AttributeList attributes,
                    List<Ability> inherentAbilities, List<CharacterClass> possibleClasses, ModelProperties modelProperties)
         implements NamedAndDescribed, ModelProperties.ModelPropContainer {
 
@@ -21,7 +20,6 @@ public record Race(Component name, List<Component> description, AttributeList at
             MythboundSerialization.LENIENT_COMPONENT_CODEC.fieldOf("name").forGetter(Race::name),
             MythboundSerialization.LENIENT_COMPONENT_CODEC.listOf().fieldOf("description").forGetter(Race::description),
             AttributeList.CODEC.optionalFieldOf("attributes", AttributeList.EMPTY).forGetter(Race::attributes),
-            AbilityComponent.DIRECT_CODEC.listOf().optionalFieldOf("components", List.of()).forGetter(Race::components),
             MythboundSerialization.registryCodec(() -> MythboundCore.ABILITIES).listOf().optionalFieldOf("inherent_abilities", List.of()).forGetter(Race::inherentAbilities),
             MythboundSerialization.registryCodec(() -> MythboundCore.CLASSES).listOf().fieldOf("possible_classes").forGetter(Race::possibleClasses),
             ModelProperties.CODEC.optionalFieldOf("model_properties", ModelProperties.DEFAULT).forGetter(Race::modelProperties)
@@ -29,7 +27,7 @@ public record Race(Component name, List<Component> description, AttributeList at
 
     @Override
     public ResourceLocation getId() {
-        return MythboundCore.RACES.getData().inverse().get(this);
+        return MythboundCore.RACES.getKeyOrThrow(this);
     }
 
     public void initialize(LivingEntity entity) {
@@ -46,7 +44,7 @@ public record Race(Component name, List<Component> description, AttributeList at
 
         CharacterBuild data = CharacterBuild.get(entity);
         for (Ability ability : inherentAbilities) {
-            data.removeAbility(ability);
+            data.removeAbility(ability.getId());
         }
     }
 }

@@ -15,7 +15,9 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 
-public class ShootProjectileComponent extends AbilityComponent {
+import javax.annotation.Nullable;
+
+public class ShootProjectileComponent implements AbilityComponent {
     public static final MapCodec<ShootProjectileComponent> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
             CompoundTag.CODEC.fieldOf("projectile").forGetter(o -> o.projectile),
             Codec.FLOAT.fieldOf("velocity").forGetter(o -> o.velocity),
@@ -44,7 +46,7 @@ public class ShootProjectileComponent extends AbilityComponent {
     }
 
     @Override
-    public void cast(LivingEntity caster) {
+    public void onCast(LivingEntity caster, @Nullable LivingEntity target) {
         if (caster.level().isClientSide()) {
             return;
         }
@@ -55,12 +57,17 @@ public class ShootProjectileComponent extends AbilityComponent {
         }
         EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(entityId);
 
-        float xRot = caster.getXRot();
-        float yRot = caster.getYRot();
-        Vec3 angle = new Vec3(
-                -Mth.sin(yRot * Mth.DEG_TO_RAD) * Mth.cos(xRot * Mth.DEG_TO_RAD),
-                -Mth.sin((xRot + loft) * Mth.DEG_TO_RAD),
-                Mth.cos(yRot * Mth.DEG_TO_RAD) * Mth.cos(xRot * Mth.DEG_TO_RAD));
+        Vec3 angle;
+        if (target == null) {
+            float xRot = caster.getXRot();
+            float yRot = caster.getYRot();
+            angle = new Vec3(
+                    -Mth.sin(yRot * Mth.DEG_TO_RAD) * Mth.cos(xRot * Mth.DEG_TO_RAD),
+                    -Mth.sin((xRot + loft) * Mth.DEG_TO_RAD),
+                    Mth.cos(yRot * Mth.DEG_TO_RAD) * Mth.cos(xRot * Mth.DEG_TO_RAD));
+        } else {
+            angle = target.getEyePosition().subtract(caster.getEyePosition()).normalize();
+        }
 
         for (int i = 0; i < count; i++) {
             Entity entity = entityType.create((ServerLevel) caster.level(), e -> {

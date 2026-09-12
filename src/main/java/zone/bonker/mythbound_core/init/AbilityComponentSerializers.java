@@ -7,6 +7,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.RegistryBuilder;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability.component.AbilityComponent;
+import zone.bonker.mythbound_core.core.ability.component.MagicUnitComponent;
 import zone.bonker.mythbound_core.core.ability.component.ShootProjectileComponent;
 
 import java.util.function.Supplier;
@@ -21,14 +22,9 @@ public class AbilityComponentSerializers {
     public static final Registry<MapCodec<? extends AbilityComponent>> REGISTRY =
             new RegistryBuilder<>(KEY).sync(true).create();
 
-    //// ABILITY TYPES
-
     public static final Supplier<MapCodec<ShootProjectileComponent>> SHOOT_PROJECTILE =
-            register("shoot_projectile", ShootProjectileComponent.CODEC);
+            REGISTER.register("shoot_projectile", () -> ShootProjectileComponent.CODEC);
 
-    //// METHODS
-
-    private static <T extends AbilityComponent> Supplier<MapCodec<T>> register(String id, MapCodec<T> codec) {
-        return REGISTER.register(id, () -> codec);
-    }
+    public static final Supplier<MapCodec<MagicUnitComponent>> MAGIC_UNIT =
+            REGISTER.register("magic_unit", () -> MagicUnitComponent.CODEC);
 }

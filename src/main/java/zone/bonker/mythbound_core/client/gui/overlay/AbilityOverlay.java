@@ -23,12 +23,16 @@ import java.util.List;
 public class AbilityOverlay implements LayeredDraw.Layer {
     public static final ResourceLocation ID = MythboundCore.identifier("ability_overlay");
 
-    private static final int ABILITY_SIZE = AbilityWidget.ICON_SIZE;
-    private static final int MIN_SPACING = 8;
-    private static final int MARGIN = 32;
+    public static final int ABILITY_SIZE = AbilityWidget.ICON_SIZE;
+    public static final int MIN_SPACING = 8;
+    public static final int MARGIN = 32;
+
+    public static final Map<ResourceLocation, Vector2ic> ABILITY_LOCATIONS = new HashMap<>();
 
     @Override
     public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+        ABILITY_LOCATIONS.clear();
+
         if (Minecraft.getInstance().player == null) {
             return;
         }
@@ -51,11 +55,9 @@ public class AbilityOverlay implements LayeredDraw.Layer {
         Collections.sort(ids);
 
         for (ResourceLocation id : ids) {
-            Ability ability = MythboundCore.ABILITIES.getData().get(id);
-            if (ability == null) {
-                continue;
-            }
+            ABILITY_LOCATIONS.put(id, new Vector2i(x, y));
 
+            Ability ability = MythboundCore.ABILITIES.getOrThrow(id);
             Vector2ic size = renderAbility(guiGraphics, ability, characterBuild.getAbilityBindings().get(id), x, y);
 
             if (size.x() > maxWidth) {

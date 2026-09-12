@@ -105,14 +105,14 @@ public class MythboundCommands {
     }
 
     private static int getAbilities(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        List<ResourceLocation> abilityIds = CharacterBuild.get(verifyLivingEntity(context)).getUnlockedAbilityIds();
+        List<ResourceLocation> abilityIds = CharacterBuild.get(verifyLivingEntity(context)).getAbilities();
         if (abilityIds.isEmpty()) {
             context.getSource().sendSystemMessage(Component.translatable("commands." + MythboundCore.MODID + ".no_abilities"));
         } else {
             MutableComponent list = Component.empty();
             boolean empty = true;
             for (ResourceLocation id : abilityIds) {
-                Ability ability = MythboundCore.ABILITIES.getData().get(id);
+                Ability ability = MythboundCore.ABILITIES.getOrThrow(id);
                 if (!empty) {
                     list = list.append(", ");
                 }

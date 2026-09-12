@@ -31,10 +31,7 @@ public record AbilityTree(List<Node> nodes) {
                 continue;
             }
 
-            Ability ability = MythboundCore.ABILITIES.getData().get(node.abilityId);
-            if (ability == null) {
-                continue;
-            }
+            Ability ability = MythboundCore.ABILITIES.getOrThrow(node.abilityId);
 
             if (node.requiredAbilities.stream().anyMatch(requiredId -> !characterBuild.hasAbility(requiredId))) {
                 continue;
@@ -51,10 +48,7 @@ public record AbilityTree(List<Node> nodes) {
     public void deinitialize(LivingEntity entity) {
         CharacterBuild characterBuild = CharacterBuild.get(entity);
         for (Node node : nodes) {
-            Ability ability = MythboundCore.ABILITIES.getData().get(node.abilityId);
-            if (ability != null) {
-                characterBuild.removeAbility(ability);
-            }
+            characterBuild.removeAbility(node.abilityId);
         }
     }
 

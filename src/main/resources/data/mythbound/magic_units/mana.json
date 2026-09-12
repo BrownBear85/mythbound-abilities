@@ -1,0 +1,15 @@
+{
+  "name": "Mana",
+  "color": "#7744EE",
+  "maximum": 100,
+  "display": "global",
+  "listeners": [
+    {
+      "trigger": "mythbound_core:tick",
+      "conditions": {
+        "interval": 10
+      },
+      "amount": 2
+    }
+  ]
+}

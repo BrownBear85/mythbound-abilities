@@ -10,19 +10,18 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.event.entity.EntityEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
-import zone.bonker.mythbound_core.core.ability.Ability;
-import zone.bonker.mythbound_core.core.AttributeList;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.Race;
-import zone.bonker.mythbound_core.core.ability.component.AbilityComponent;
+import zone.bonker.mythbound_core.core.ability.MagicUnitDefinition;
+import zone.bonker.mythbound_core.core.trigger.MythboundTrigger;
 import zone.bonker.mythbound_core.data.CharacterBuild;
+import zone.bonker.mythbound_core.init.MythboundTriggers;
 
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 @EventBusSubscriber
 public class MythboundEvents {
@@ -33,6 +32,13 @@ public class MythboundEvents {
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
         if (!(event.getEntity() instanceof LivingEntity entity)) {
             return;
+        }
+
+        for (Map.Entry<ResourceLocation, MagicUnitDefinition> entry : MythboundCore.MAGIC_UNITS.getData().entrySet()) {
+            int i = 0;
+            for (MagicUnitDefinition.ListenerDefinition<?> listenerDefinition : entry.getValue().defaultListeners()) {
+                listenerDefinition.addListener(entity, entry.getKey(), "default", i++);
+            }
         }
 
         CharacterBuild.getExisting(entity).ifPresent(data -> {
@@ -46,15 +52,35 @@ public class MythboundEvents {
                 characterClass.initialize(entity);
             }
 
-            for (Iterator<ResourceLocation> iterator = data.getUnlockedAbilityIds().iterator(); iterator.hasNext(); ) {
-                ResourceLocation id = iterator.next();
-                Ability ability = MythboundCore.ABILITIES.getData().get(id);
-                if (ability == null) {
-                    MythboundCore.LOGGER.warn("Tried to apply attributes for unregistered ability {}, removing from entity {}", id, entity);
-                    iterator.remove();
-                } else {
-                    ability.attributes().apply(entity, AttributeList.ability(id));
-                }
+            for (ResourceLocation id : data.getAbilities()) {
+                MythboundCore.ABILITIES.getOrThrow(id).initialize(entity);
+            }
+        });
+    }
+
+    @SubscribeEvent
+    public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
+        if (!(event.getEntity() instanceof LivingEntity entity)) {
+            return;
+        }
+
+        for (MythboundTrigger<?> trigger : MythboundTriggers.REGISTRY) {
+            trigger.removeAllListeners(entity);
+        }
+
+        CharacterBuild.getExisting(entity).ifPresent(data -> {
+            Race race = data.getRace();
+            if (race != null) {
+                race.deinitialize(entity);
+            }
+
+            CharacterClass characterClass = data.getCharacterClass();
+            if (characterClass != null) {
+                characterClass.deinitialize(entity);
+            }
+
+            for (ResourceLocation id : data.getAbilities()) {
+                MythboundCore.ABILITIES.getOrThrow(id).deinitialize(entity);
             }
         });
     }
@@ -66,30 +92,9 @@ public class MythboundEvents {
         }
 
         CharacterBuild.getExisting(entity).ifPresent(data -> {
-            Set<AbilityComponent> effects = new HashSet<>();
-
-            Race race = data.getRace();
-            if (race != null) {
-                effects.addAll(race.components());
+            for (ResourceLocation id : data.getAbilities()) {
+                MythboundCore.ABILITIES.getOrThrow(id).onTick(entity);
             }
-
-            CharacterClass characterClass = data.getCharacterClass();
-            if (characterClass != null) {
-                effects.addAll(characterClass.components());
-            }
-
-            for (Iterator<ResourceLocation> iterator = data.getUnlockedAbilityIds().iterator(); iterator.hasNext(); ) {
-                ResourceLocation id = iterator.next();
-                Ability ability = MythboundCore.ABILITIES.getData().get(id);
-                if (ability == null) {
-                    MythboundCore.LOGGER.warn("Tried to tick unregistered ability {}, removing from entity {}", id, entity);
-                    iterator.remove();
-                } else {
-                    effects.addAll(ability.components());
-                }
-            }
-
-            effects.forEach(effect -> effect.tick(entity));
         });
     }
 

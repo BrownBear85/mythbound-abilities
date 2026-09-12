@@ -22,6 +22,7 @@
   "commands.mythbound_core.reset_build": "Reset your character build",
   "commands.mythbound_core.unregistered_id": "Unregistered id: %s",
   "error.mythbound_core.registry_sync_error": "An error occurred whilst syncing Mythbound's reloadable datapack registries: %s",
+  "error.mythbound_core.data_file_sync_error": "An error occurred whilst syncing Mythbound's reloadable data files: %s",
   "gui.mythbound_core.ability_tree.title": "Unlock Abilities",
   "gui.mythbound_core.ability_tree.no_subclass": "No Subclass Selected",
   "gui.mythbound_core.ability_tree.points_available": "%s Points Available",

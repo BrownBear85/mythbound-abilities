@@ -1,8 +1,10 @@
 {
+  "type": "spell",
   "name": "[{\"text\":\"Fireball\",\"color\":\"red\"}]",
   "description": [
     "Fireball description"
   ],
+  "targeting": "all",
   "components": [
     {
       "type": "mythbound_core:shoot_projectile",
@@ -10,6 +12,12 @@
         "id": "minecraft:fireball"
       },
       "velocity": 0.5
+    }
+  ],
+  "cost": [
+    {
+      "unit": "mythbound:mana",
+      "amount": 15
     }
   ]
 }

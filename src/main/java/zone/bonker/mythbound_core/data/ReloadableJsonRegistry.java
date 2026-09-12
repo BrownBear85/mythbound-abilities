@@ -12,13 +12,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.ReloadableServerResources;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import zone.bonker.mythbound_core.client.MythboundCoreClient;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
-public class ReloadableJsonRegistry<T> {
-    public static final Logger LOGGER = LogManager.getLogger();
+public class ReloadableJsonRegistry<T> implements Iterable<T> {
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private final String directory;
     private final Codec<T> codec;
@@ -56,8 +58,24 @@ public class ReloadableJsonRegistry<T> {
         } else if (clientData != null) {
             return clientData;
         } else {
-            throw new IllegalStateException("Tried to access the " + directory + " registry before it was loaded");
+            throw new NullPointerException("Tried to access the " + directory + " registry before it was loaded");
         }
+    }
+
+    public T getOrThrow(ResourceLocation key) {
+        T obj = getData().get(key);
+        if (obj == null) {
+            throw new NullPointerException("Unknown id in " + directory + ": " + key);
+        }
+        return obj;
+    }
+
+    public ResourceLocation getKeyOrThrow(T obj) {
+        ResourceLocation key = getData().inverse().get(obj);
+        if (key == null) {
+            throw new NullPointerException("Unregistered object in " + directory + ": " + obj);
+        }
+        return key;
     }
 
     public Codec<T> byNameCodec() {
@@ -79,12 +97,17 @@ public class ReloadableJsonRegistry<T> {
         for (ResourceLocation id : resourceList.keySet()) {
             try {
                 codec.parse(ops, resourceList.get(id))
-                        .resultOrPartial(errorMsg -> LOGGER.warn("Found an error in {}/{}:{} - {}", id.getNamespace(), directory, id.getPath(), errorMsg))
+                        .resultOrPartial(errorMsg -> LOGGER.warn("Found an error in {}:{}/{} - {}", id.getNamespace(), directory, id.getPath(), errorMsg))
                         .ifPresent(obj -> data.put(id, obj));
             } catch (Exception e) {
-                LOGGER.warn("An error occurred whilst decoding {}/{}:{} - {}", id.getNamespace(), directory, id.getPath(), e);
+                LOGGER.warn("An error occurred whilst decoding {}:{}/{} - {}", id.getNamespace(), directory, id.getPath(), e);
             }
         }
         return data;
+    }
+
+    @Override
+    public @NotNull Iterator<T> iterator() {
+        return getData().values().iterator();
     }
 }
