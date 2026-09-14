@@ -3,9 +3,6 @@ package zone.bonker.mythbound_core.core.ability;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
-import zone.bonker.mythbound_core.MythboundCore;
-import zone.bonker.mythbound_core.data.CharacterBuild;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -23,33 +20,6 @@ public record AbilityTree(List<Node> nodes) {
             }
         }
         return null;
-    }
-
-    public void unlockAllFreeAbilities(CharacterBuild characterBuild) {
-        for (Node node : nodes) {
-            if (node.cost > 0) {
-                continue;
-            }
-
-            Ability ability = MythboundCore.ABILITIES.getOrThrow(node.abilityId);
-
-            if (node.requiredAbilities.stream().anyMatch(requiredId -> !characterBuild.hasAbility(requiredId))) {
-                continue;
-            }
-
-            characterBuild.unlockAbility(ability);
-        }
-    }
-
-    public void initialize(LivingEntity entity) {
-        unlockAllFreeAbilities(CharacterBuild.get(entity));
-    }
-
-    public void deinitialize(LivingEntity entity) {
-        CharacterBuild characterBuild = CharacterBuild.get(entity);
-        for (Node node : nodes) {
-            characterBuild.removeAbility(node.abilityId);
-        }
     }
 
     public record Node(ResourceLocation abilityId, List<ResourceLocation> requiredAbilities, int cost, int row, int column) {

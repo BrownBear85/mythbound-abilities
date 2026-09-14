@@ -11,6 +11,6 @@
     }
   ],
   "possible_classes": [
-    "mythbound:test_class"
+    "mythbound:test_units_class", "mythbound:test_ability_tree"
   ]
 }

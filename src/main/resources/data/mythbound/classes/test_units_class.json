@@ -1,7 +1,7 @@
 {
-  "name": "Test class",
+  "name": "Test class: units/targeting",
   "description": [
-    "A class for testing"
+    "This class has 2 abilities for testing magic units and 3 for testing targeting"
   ],
   "main_ability_tree": {
     "nodes": [

@@ -34,11 +34,9 @@ public record CharacterClass(Component name, List<Component> description, Attrib
 
     public void initialize(LivingEntity entity) {
         attributes.apply(entity, AttributeList.CLASS);
-        mainAbilityTree.initialize(entity);
     }
 
     public void deinitialize(LivingEntity entity) {
         attributes.remove(entity, AttributeList.CLASS);
-        mainAbilityTree.deinitialize(entity);
     }
 }

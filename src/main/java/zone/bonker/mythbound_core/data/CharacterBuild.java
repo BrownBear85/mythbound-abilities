@@ -10,12 +10,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.neoforged.neoforge.attachment.IAttachmentHolder;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.client.MythboundCoreClient;
 import zone.bonker.mythbound_core.core.*;
-import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.ability.AbilityBinding;
+import zone.bonker.mythbound_core.core.ability.AbilityTree;
 import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;
 
 import javax.annotation.Nullable;
@@ -30,17 +29,19 @@ public class CharacterBuild extends OwnedAttachment {
             ResourceLocation.CODEC.fieldOf("subclass").forGetter(o -> o.subclassId),
             Codec.INT.fieldOf("class_unlock_points").forGetter(o -> o.classUnlockPoints),
             Codec.INT.fieldOf("subclass_unlock_points").forGetter(o -> o.subclassUnlockPoints),
-            ResourceLocation.CODEC.listOf().fieldOf("abilities").forGetter(o -> o.abilities),
+            ResourceLocation.CODEC.listOf().fieldOf("unlocked_class_abilities").forGetter(o -> o.unlockedClassAbilities),
+            ResourceLocation.CODEC.listOf().fieldOf("unlocked_subclass_abilities").forGetter(o -> o.unlockedSubclassAbilities),
             Codec.unboundedMap(ResourceLocation.CODEC, AbilityBinding.CODEC).fieldOf("bindings").forGetter(o -> o.bindings)
     ).apply(inst, CharacterBuild::new));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, CharacterBuild> NETWORK_CODEC = NeoForgeStreamCodecs.composite(
+    public static final StreamCodec<RegistryFriendlyByteBuf, CharacterBuild> NETWORK_CODEC = MythboundSerialization.composite(
             ResourceLocation.STREAM_CODEC, o -> o.raceId,
             ResourceLocation.STREAM_CODEC, o -> o.classId,
             ResourceLocation.STREAM_CODEC, o -> o.subclassId,
             ByteBufCodecs.VAR_INT, o -> o.classUnlockPoints,
             ByteBufCodecs.VAR_INT, o -> o.subclassUnlockPoints,
-            ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), o -> o.abilities,
+            ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), o -> o.unlockedClassAbilities,
+            ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), o -> o.unlockedSubclassAbilities,
             ByteBufCodecs.map(HashMap::new, ResourceLocation.STREAM_CODEC, AbilityBinding.NETWORK_CODEC), o -> o.bindings,
             CharacterBuild::new);
 
@@ -49,7 +50,8 @@ public class CharacterBuild extends OwnedAttachment {
     private ResourceLocation subclassId = NONE;
     private int classUnlockPoints;
     private int subclassUnlockPoints;
-    private final List<ResourceLocation> abilities = new ArrayList<>();
+    private final ArrayList<ResourceLocation> unlockedClassAbilities = new ArrayList<>();
+    private final ArrayList<ResourceLocation> unlockedSubclassAbilities = new ArrayList<>();
     private final Map<ResourceLocation, AbilityBinding> bindings = new HashMap<>();
 
     public CharacterBuild(IAttachmentHolder holder) {
@@ -57,22 +59,26 @@ public class CharacterBuild extends OwnedAttachment {
     }
 
     private CharacterBuild(ResourceLocation raceId, ResourceLocation classId, ResourceLocation subclassId,
-                          int classUnlockPoints, int subclassUnlockPoints, List<ResourceLocation> abilities,
-                          Map<ResourceLocation, AbilityBinding> bindings) {
+                          int classUnlockPoints, int subclassUnlockPoints, List<ResourceLocation> unlockedClassAbilities,
+                           List<ResourceLocation> unlockedSubclassAbilities, Map<ResourceLocation, AbilityBinding> bindings) {
         this.raceId = verify(raceId, MythboundCore.RACES);
         this.classId = verify(classId, MythboundCore.CLASSES);
         this.subclassId = verifySubclass(classId, subclassId);
         this.classUnlockPoints = classUnlockPoints;
         this.subclassUnlockPoints = subclassUnlockPoints;
 
-        for (ResourceLocation abilityId : abilities) {
+        for (ResourceLocation abilityId : unlockedClassAbilities) {
             verify(abilityId, MythboundCore.ABILITIES);
         }
-        this.abilities.addAll(abilities);
-
+        for (ResourceLocation abilityId : unlockedSubclassAbilities) {
+            verify(abilityId, MythboundCore.ABILITIES);
+        }
         for (ResourceLocation abilityId : bindings.keySet()) {
             verify(abilityId, MythboundCore.ABILITIES);
         }
+
+        this.unlockedClassAbilities.addAll(unlockedClassAbilities);
+        this.unlockedSubclassAbilities.addAll(unlockedSubclassAbilities);
         this.bindings.putAll(bindings);
     }
 
@@ -123,8 +129,8 @@ public class CharacterBuild extends OwnedAttachment {
         return characterClass == null ? null : characterClass.subclasses().get(subclassId);
     }
 
-    public List<ResourceLocation> getAbilities() {
-        return abilities;
+    public List<ResourceLocation> getUnlockedAbilities() {
+        return MythboundCore.ABILITIES.getData().keySet().stream().filter(this::hasAbility).toList();
     }
 
     public Map<ResourceLocation, AbilityBinding> getAbilityBindings() {
@@ -132,7 +138,13 @@ public class CharacterBuild extends OwnedAttachment {
     }
 
     public boolean hasAbility(ResourceLocation id) {
-        return abilities.contains(id);
+        if (unlockedClassAbilities.contains(id)) {
+            return true;
+        } else if (unlockedSubclassAbilities.contains(id)) {
+            return true;
+        }
+        Race race = getRace();
+        return race != null && race.inherentAbilities().stream().anyMatch(ability -> ability.getId().equals(id));
     }
 
     public int getClassUnlockPoints() {
@@ -149,12 +161,7 @@ public class CharacterBuild extends OwnedAttachment {
         owner().setData(MythboundAttachmentTypes.CHARACTER_BUILD, this);
     }
 
-    public boolean setRace(@Nullable Race race) {
-        ResourceLocation id = race == null ? NONE : race.getId();
-        if (id.equals(raceId)) {
-            return false;
-        }
-
+    public void setRace(@Nullable Race race) {
         Race oldRace = getRace();
         if (oldRace != null) {
             oldRace.deinitialize(owner());
@@ -165,7 +172,7 @@ public class CharacterBuild extends OwnedAttachment {
             setClass(null);
         }
 
-        this.raceId = id;
+        this.raceId = race == null ? NONE : race.getId();
         save();
 
         if (race != null) {
@@ -173,92 +180,71 @@ public class CharacterBuild extends OwnedAttachment {
         }
 
         refreshDimensions(owner());
-
-        return true;
     }
 
-    public boolean setClass(@Nullable CharacterClass characterClass) {
-        ResourceLocation id = characterClass == null ? NONE : characterClass.getId();
-        if (id.equals(classId)) {
-            return false;
-        }
-
-        Race race = getRace();
-        if (race != null && characterClass != null && notCompatible(race, characterClass)) {
-            return false;
-        }
-
+    public void setClass(@Nullable CharacterClass characterClass) {
         CharacterClass oldClass = getCharacterClass();
         if (oldClass != null) {
             oldClass.deinitialize(owner());
         }
 
-        this.classId = id;
+        this.classId = characterClass == null ? NONE : characterClass.getId();
+        unlockedClassAbilities.clear();
+        setSubclass(null);
         save();
 
         if (characterClass != null) {
             characterClass.initialize(owner());
-
-            subclassId = characterClass.subclasses().keySet().stream().findAny().orElse(NONE);
-            save();
+            unlockAllFreeAbilities(characterClass.mainAbilityTree(), unlockedClassAbilities);
         }
 
         refreshDimensions(owner());
-
-        return true;
     }
 
-    public boolean unlockAbility(Ability ability) {
-        if (abilities.contains(ability.getId())) {
-            return false;
+    public void setSubclass(@Nullable ResourceLocation subclassId) {
+        unlockedSubclassAbilities.clear();
+
+        if (subclassId == null) {
+            this.subclassId = NONE;
+        } else {
+            Subclass subclass = Objects.requireNonNull(getCharacterClass()).subclasses().get(subclassId);
+            unlockAllFreeAbilities(subclass.abilityTree(), unlockedSubclassAbilities);
+            this.subclassId = subclassId;
         }
 
-        abilities.add(ability.getId());
         save();
-
-        ability.initialize(owner());
-        return true;
     }
 
-    public void unlockAbilityFromTree(Ability ability, int cost, boolean mainAbilityTree) {
-        if (unlockAbility(ability)) {
-            if (mainAbilityTree) {
-                classUnlockPoints -= cost;
-            } else {
-                subclassUnlockPoints -= cost;
+    public void unlockAbilityFromTree(AbilityTree abilityTree, AbilityTree.Node unlockedNode, boolean mainAbilityTree) {
+        MythboundCore.ABILITIES.getOrThrow(unlockedNode.abilityId()).initialize(owner());
+
+        if (mainAbilityTree) {
+            classUnlockPoints -= unlockedNode.cost();
+            unlockedClassAbilities.add(unlockedNode.abilityId());
+            unlockAllFreeAbilities(abilityTree, unlockedClassAbilities);
+        } else {
+            subclassUnlockPoints -= unlockedNode.cost();
+            unlockedSubclassAbilities.add(unlockedNode.abilityId());
+            unlockAllFreeAbilities(abilityTree, unlockedSubclassAbilities);
+        }
+
+        save();
+    }
+
+    private void unlockAllFreeAbilities(AbilityTree abilityTree, ArrayList<ResourceLocation> unlockedAbilities) {
+        for (AbilityTree.Node node : abilityTree.nodes()) {
+            if (node.cost() > 0
+                    || unlockedAbilities.contains(node.abilityId())
+                    || !unlockedAbilities.containsAll(node.requiredAbilities())) {
+                continue;
             }
+
+            unlockedAbilities.add(node.abilityId());
             save();
-
-            if (mainAbilityTree) {
-                CharacterClass characterClass = getCharacterClass();
-                if (characterClass != null) {
-                    characterClass.mainAbilityTree().unlockAllFreeAbilities(this);
-                }
-            } else {
-                Subclass subclass = getSubclass();
-                if (subclass != null) {
-                    subclass.abilityTree().unlockAllFreeAbilities(this);
-                }
-            }
         }
-    }
-
-    public void removeAbility(ResourceLocation abilityId) {
-        if (!abilities.remove(abilityId)) {
-            return;
-        }
-
-        bindings.remove(abilityId);
-
-        MythboundCore.ABILITIES.getOrThrow(abilityId).deinitialize(owner());
-        save();
     }
 
     public void setAbilityBinding(ResourceLocation id, AbilityBinding binding) {
-        if (!abilities.contains(id)) {
-            return;
-        }
-
         bindings.remove(id);
         if (!binding.isNoBind()) {
             bindings.put(id, binding);

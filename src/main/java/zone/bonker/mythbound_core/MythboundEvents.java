@@ -52,7 +52,7 @@ public class MythboundEvents {
                 characterClass.initialize(entity);
             }
 
-            for (ResourceLocation id : data.getAbilities()) {
+            for (ResourceLocation id : data.getUnlockedAbilities()) {
                 MythboundCore.ABILITIES.getOrThrow(id).initialize(entity);
             }
         });
@@ -79,7 +79,7 @@ public class MythboundEvents {
                 characterClass.deinitialize(entity);
             }
 
-            for (ResourceLocation id : data.getAbilities()) {
+            for (ResourceLocation id : data.getUnlockedAbilities()) {
                 MythboundCore.ABILITIES.getOrThrow(id).deinitialize(entity);
             }
         });
@@ -92,7 +92,7 @@ public class MythboundEvents {
         }
 
         CharacterBuild.getExisting(entity).ifPresent(data -> {
-            for (ResourceLocation id : data.getAbilities()) {
+            for (ResourceLocation id : data.getUnlockedAbilities()) {
                 MythboundCore.ABILITIES.getOrThrow(id).onTick(entity);
             }
         });

@@ -1,7 +1,6 @@
 package zone.bonker.mythbound_core.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -10,10 +9,8 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.PlayerSkin;
-import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -32,12 +29,10 @@ import zone.bonker.mythbound_core.client.gui.overlay.UnitsOverlay;
 import zone.bonker.mythbound_core.client.gui.screen.ability_tree.AbilityTreesScreen;
 import zone.bonker.mythbound_core.client.gui.screen.ability_tree.RefreshWithCharacterBuild;
 import zone.bonker.mythbound_core.client.model.CharacterModelExtensions;
-import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.ModelProperties;
 import zone.bonker.mythbound_core.core.Race;
 import zone.bonker.mythbound_core.data.CharacterBuild;
-import zone.bonker.mythbound_core.server.MythboundRegistryArgument;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -108,36 +103,13 @@ public class MythboundCoreClient {
 
     private void registerClientCommands(RegisterClientCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("mythbound")
-                .then(Commands.literal("bind")
-                        .then(Commands.argument("ability", MythboundRegistryArgument.ability())
-                                .suggests(MythboundRegistryArgument.SUGGEST_UNLOCKED_ABILITIES)
-                                .executes(MythboundCoreClient::startBinding)))
                 .then(Commands.literal("ability_tree")
                         .executes(context -> {
                             if (Minecraft.getInstance().player != null && CharacterBuild.get(Minecraft.getInstance().player).getCharacterClass() != null) {
                                 Minecraft.getInstance().setScreen(new AbilityTreesScreen(CharacterBuild.get(Minecraft.getInstance().player)));
                             }
-                            return 1;
+                            return SUCCESS;
                         })));
-    }
-
-    private static int startBinding(CommandContext<CommandSourceStack> context) {
-        if (Minecraft.getInstance().player == null) {
-            return FAILURE;
-        }
-
-        Ability ability = context.getArgument("ability", Ability.class);
-
-        if (!CharacterBuild.get(Minecraft.getInstance().player).hasAbility(ability.getId())) {
-            context.getSource().sendFailure(
-                    Component.translatable("commands." + MythboundCore.MODID + ".ability_not_unlocked"));
-            return FAILURE;
-        }
-
-        AbilityInputHandler.abilityToBind = ability.getId();
-        context.getSource().sendSystemMessage(
-                Component.translatable("commands." + MythboundCore.MODID + ".binding", ability.name()));
-        return SUCCESS;
     }
 
     //// METHODS

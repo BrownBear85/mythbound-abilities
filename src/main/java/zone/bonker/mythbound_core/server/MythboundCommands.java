@@ -7,6 +7,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.registries.Registries;
@@ -27,6 +29,7 @@ import zone.bonker.mythbound_core.data.CharacterBuild;
 import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;
 
 import java.util.List;
+import java.util.Set;
 
 @EventBusSubscriber
 public class MythboundCommands {
@@ -63,6 +66,14 @@ public class MythboundCommands {
                                 .then(Commands.argument("class", MythboundRegistryArgument.characterClass())
                                         .suggests(MythboundRegistryArgument.SUGGEST_ALL_CLASSES)
                                         .executes(MythboundCommands::setClass)))
+                        .then(Commands.literal("subclass")
+                                .then(Commands.argument("subclass", ResourceLocationArgument.id())
+                                        .suggests((context, builder) ->
+                                                SharedSuggestionProvider.suggestResource(CharacterBuild.getExisting(context.getSource().getEntity())
+                                                        .map(CharacterBuild::getCharacterClass)
+                                                        .map(characterClass -> characterClass.subclasses().keySet())
+                                                        .orElse(Set.of()), builder))
+                                        .executes(MythboundCommands::setSubclass)))
                         .then(Commands.literal("points")
                                 .then(Commands.argument("class_points", IntegerArgumentType.integer(0))
                                         .then(Commands.argument("subclass_points", IntegerArgumentType.integer(0))
@@ -105,7 +116,7 @@ public class MythboundCommands {
     }
 
     private static int getAbilities(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        List<ResourceLocation> abilityIds = CharacterBuild.get(verifyLivingEntity(context)).getAbilities();
+        List<ResourceLocation> abilityIds = CharacterBuild.get(verifyLivingEntity(context)).getUnlockedAbilities();
         if (abilityIds.isEmpty()) {
             context.getSource().sendSystemMessage(Component.translatable("commands." + MythboundCore.MODID + ".no_abilities"));
         } else {
@@ -128,10 +139,11 @@ public class MythboundCommands {
         LivingEntity entity = verifyLivingEntity(context);
         Race race = context.getArgument("race", Race.class);
 
-        if (!CharacterBuild.get(entity).setRace(race)) {
+        if (CharacterBuild.get(entity).getRace() == race) {
             context.getSource().sendFailure(Component.translatable("commands." + MythboundCore.MODID + ".same_race"));
             return FAILURE;
         } else {
+            CharacterBuild.get(entity).setRace(race);
             context.getSource().sendSuccess(() ->
                     Component.translatable("commands." + MythboundCore.MODID + ".set_race", race.name()), false);
             return SUCCESS;
@@ -149,14 +161,34 @@ public class MythboundCommands {
         } else if (CharacterBuild.notCompatible(race, characterClass)) {
             context.getSource().sendFailure(Component.translatable("commands." + MythboundCore.MODID + ".incompatible_race_and_class", race.name()));
             return FAILURE;
-        } else if (!CharacterBuild.get(entity).setClass(characterClass)) {
+        } else if (CharacterBuild.get(entity).getCharacterClass() == characterClass) {
             context.getSource().sendFailure(Component.translatable("commands." + MythboundCore.MODID + ".same_class"));
             return FAILURE;
         } else {
+            CharacterBuild.get(entity).setClass(characterClass);
             context.getSource().sendSuccess(() ->
                     Component.translatable("commands." + MythboundCore.MODID + ".set_class", characterClass.name()), false);
             return SUCCESS;
         }
+    }
+
+    private static int setSubclass(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        LivingEntity entity = verifyLivingEntity(context);
+        ResourceLocation subclassId = context.getArgument("subclass", ResourceLocation.class);
+
+        CharacterClass characterClass = CharacterBuild.get(entity).getCharacterClass();
+        if (characterClass == null) {
+            context.getSource().sendFailure(Component.translatable("commands." + MythboundCore.MODID + ".need_class_to_set_subclass"));
+            return FAILURE;
+        } else if (!characterClass.subclasses().containsKey(subclassId)) {
+            context.getSource().sendFailure(Component.translatable("commands." + MythboundCore.MODID + ".invalid_subclass", characterClass.name(), subclassId.toString()));
+            return FAILURE;
+        }
+
+        CharacterBuild.get(entity).setSubclass(subclassId);
+        context.getSource().sendSuccess(() ->
+                Component.translatable("commands." + MythboundCore.MODID + ".set_subclass", characterClass.subclasses().get(subclassId).name()), false);
+        return SUCCESS;
     }
 
     private static int setPoints(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {

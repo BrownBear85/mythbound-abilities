@@ -23,6 +23,6 @@ public class EmptyPanel extends AbilityTreePanel {
     public void drawAbove(GuiGraphics guiGraphics, double mouseX, double mouseY) {
         super.drawAbove(guiGraphics, mouseX, mouseY);
 
-        guiGraphics.drawCenteredString(Minecraft.getInstance().font, Component.translatable("gui.mythbound_core.ability_tree.no_subclass"), offset + width / 2, height / 2, 0xFFFFFFFF);
+        guiGraphics.drawCenteredString(Minecraft.getInstance().font, Component.translatable("gui.mythbound_core.ability_tree.no_subclass"), width / 2, height / 2, 0xFFFFFFFF);
     }
 }

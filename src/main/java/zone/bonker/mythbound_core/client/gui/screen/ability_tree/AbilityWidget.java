@@ -1,5 +1,6 @@
 package zone.bonker.mythbound_core.client.gui.screen.ability_tree;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -86,21 +87,23 @@ public class AbilityWidget implements HoverableClickable {
             case UNLOCKED -> {
                 tooltip.add(Component.translatable("gui.mythbound_core.ability_tree.node_unlocked").withStyle(ChatFormatting.DARK_GRAY));
 
-                AbilityBinding binding = characterBuild.getAbilityBindings().get(ability.getId());
-                boolean waitingForInput = ability.getId().equals(AbilityInputHandler.abilityToBind);
-                MutableComponent component = binding == null
-                        ? Component.translatable("gui.mythbound_core.ability_tree.node_no_bind")
-                        : AbilityInputHandler.getDisplayName(binding).copy();
+                if (ability.type().isCastable()) {
+                    AbilityBinding binding = characterBuild.getAbilityBindings().get(ability.getId());
+                    boolean waitingForInput = ability.getId().equals(AbilityInputHandler.abilityToBind);
+                    MutableComponent component = binding == null
+                            ? Component.translatable("gui.mythbound_core.ability_tree.node_no_bind")
+                            : AbilityInputHandler.getDisplayName(binding).copy();
 
-                if (waitingForInput) {
-                    component = Component.literal("> ").withStyle(ChatFormatting.YELLOW).append(component.withStyle(ChatFormatting.WHITE, ChatFormatting.UNDERLINE)).append(" <").withStyle(ChatFormatting.YELLOW);
-                } else {
-                    component = component.withStyle(ChatFormatting.GRAY);
+                    if (waitingForInput) {
+                        component = Component.literal("> ").withStyle(ChatFormatting.YELLOW).append(component.withStyle(ChatFormatting.WHITE, ChatFormatting.UNDERLINE)).append(" <").withStyle(ChatFormatting.YELLOW);
+                    } else {
+                        component = component.withStyle(ChatFormatting.GRAY);
+                    }
+
+                    component = Component.translatable("gui.mythbound_core.ability_tree.node_bound", component).withStyle(ChatFormatting.GRAY);
+
+                    tooltip.add(component);
                 }
-
-                component = Component.translatable("gui.mythbound_core.ability_tree.node_bound", component).withStyle(ChatFormatting.GRAY);
-
-                tooltip.add(component);
             }
         }
     }
@@ -117,7 +120,7 @@ public class AbilityWidget implements HoverableClickable {
         return mouseX >= x && mouseX < x + SIZE && mouseY >= y && mouseY < y + SIZE;
     }
 
-    public void renderLines(GuiGraphics guiGraphics, double mouseX, double mouseY) {
+    public void renderLines(GuiGraphics guiGraphics) {
         float thisCenterX = x + 0.5F * SIZE;
         float thisCenterY = y + 0.5F * SIZE;
 
@@ -165,10 +168,14 @@ public class AbilityWidget implements HoverableClickable {
 
     @Override
     public boolean onClick(int button, double mouseX, double mouseY) {
+        if (button != InputConstants.MOUSE_BUTTON_LEFT) {
+            return false;
+        }
+
         if (status == Status.CAN_AFFORD) {
             PacketDistributor.sendToServer(new C2SUnlockAbilityPacket(node.abilityId(), mainAbilityTree));
             return true;
-        } else if (status == Status.UNLOCKED) {
+        } else if (status == Status.UNLOCKED && ability.type().isCastable()) {
             AbilityInputHandler.abilityToBind = ability.getId();
             refreshTooltip();
         }

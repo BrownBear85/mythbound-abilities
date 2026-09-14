@@ -45,7 +45,7 @@ public class AbilityTreeWidget extends AbilityTreePanel {
     public void drawInside(GuiGraphics guiGraphics, double mouseX, double mouseY) {
         RenderSystem.enableBlend();
         for (AbilityWidget widget : abilities) {
-            widget.renderLines(guiGraphics, mouseX, mouseY);
+            widget.renderLines(guiGraphics);
         }
 
         for (AbilityWidget widget : abilities) {

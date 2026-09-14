@@ -4,7 +4,6 @@
   "description": [
     "Fireball description"
   ],
-  "targeting": "all",
   "components": [
     {
       "type": "mythbound_core:shoot_projectile",

@@ -34,7 +34,6 @@ public class ClientSpellTargeting {
 
     @Nullable
     private static LivingEntity primaryTarget;
-    private static final LinkedHashMap<LivingEntity, Double> targetDistanceMap = new LinkedHashMap<>();
     private static final List<LivingEntity> sortedTargets = new ArrayList<>();
 
     private static boolean canTargetEnemies;
@@ -49,7 +48,7 @@ public class ClientSpellTargeting {
     }
 
     public static Iterable<LivingEntity> getAllTargets() {
-        return targetDistanceMap.keySet();
+        return sortedTargets;
     }
 
     @Nullable
@@ -75,7 +74,6 @@ public class ClientSpellTargeting {
 
     public static void reset() {
         primaryTarget = null;
-        targetDistanceMap.clear();
         sortedTargets.clear();
     }
 
@@ -136,8 +134,7 @@ public class ClientSpellTargeting {
     }
 
     private static void refreshTargets(ClientLevel level, LocalPlayer player) {
-        targetDistanceMap.clear();
-        sortedTargets.clear();
+        Map<LivingEntity, Double> targetDistanceMap = new HashMap<>();
 
         level.getEntitiesOfClass(LivingEntity.class, AABB.ofSize(cameraPos, maxRange, maxRange, maxRange))
                 .stream()
@@ -151,8 +148,14 @@ public class ClientSpellTargeting {
 
         targetDistanceMap.entrySet().removeIf(entry -> entry.getValue() > MAX_DIST_TO_CROSSHAIR);
 
+        sortedTargets.clear();
         sortedTargets.addAll(targetDistanceMap.keySet());
         sortedTargets.sort(Comparator.comparingDouble(targetDistanceMap::get));
+
+        int maxTargets = 50;
+        while (sortedTargets.size() > maxTargets) {
+            sortedTargets.removeLast();
+        }
 
         if (!sortedTargets.isEmpty() && (!manualTargeting || primaryTarget == null || !sortedTargets.contains(primaryTarget))) {
             manualTargeting = false;

@@ -71,7 +71,7 @@ public record C2SUnlockAbilityPacket(ResourceLocation abilityId, boolean mainAbi
                 return;
             }
 
-            characterBuild.unlockAbilityFromTree(ability, node.cost(), mainAbilityTree);
+            characterBuild.unlockAbilityFromTree(abilityTree, node, mainAbilityTree);
         });
     }
 }

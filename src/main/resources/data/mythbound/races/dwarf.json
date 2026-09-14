@@ -4,7 +4,7 @@
     "Short and fat"
   ],
   "possible_classes": [
-    "mythbound:test_units_class"
+    "mythbound:test_units_class", "mythbound:test_ability_tree"
   ],
   "model_properties": {
     "hitbox_scale_x": 1.3,

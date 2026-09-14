@@ -1,7 +1,7 @@
 {
-  "name": "Test class",
+  "name": "Testing class: ability tree",
   "description": [
-    "A class for testing"
+    "This class has several abilities that can be unlocked in the ability tree, as well as a subclass"
   ],
   "main_ability_tree": {
     "nodes": [

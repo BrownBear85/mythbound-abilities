@@ -7,7 +7,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability.Ability;
-import zone.bonker.mythbound_core.data.CharacterBuild;
 import zone.bonker.mythbound_core.data.MythboundSerialization;
 
 import java.util.List;
@@ -33,18 +32,16 @@ public record Race(Component name, List<Component> description, AttributeList at
     public void initialize(LivingEntity entity) {
         attributes.apply(entity, AttributeList.RACE);
 
-        CharacterBuild data = CharacterBuild.get(entity);
         for (Ability ability : inherentAbilities) {
-            data.unlockAbility(ability);
+            ability.initialize(entity);
         }
     }
 
     public void deinitialize(LivingEntity entity) {
         attributes.remove(entity, AttributeList.RACE);
 
-        CharacterBuild data = CharacterBuild.get(entity);
         for (Ability ability : inherentAbilities) {
-            data.removeAbility(ability.getId());
+            ability.deinitialize(entity);
         }
     }
 }
