@@ -45,7 +45,7 @@ public record C2SCastAbilityPacket(ResourceLocation abilityId, int targetId) imp
                 return;
             }
 
-            if (!ability.cost().canCast(context.player())) {
+            if (!ability.type().isCastable() || !ability.cost().canCast(context.player())) {
                 MythboundCore.LOGGER.warn("Player {} tried to cast {} without the required magic units", context.player().getScoreboardName(), abilityId);
                 return;
             }

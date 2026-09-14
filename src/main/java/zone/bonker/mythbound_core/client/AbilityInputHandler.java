@@ -66,7 +66,7 @@ public class AbilityInputHandler {
                 }
 
                 Ability ability = MythboundCore.ABILITIES.getOrThrow(entry.getKey());
-                if (!ability.cost().canCast(player)) {
+                if (!ability.type().isCastable() || !ability.cost().canCast(player)) {
                     return false;
                 }
 
@@ -90,7 +90,7 @@ public class AbilityInputHandler {
 
             if (action == GLFW.GLFW_PRESS) {
                 if (isEscape) {
-                    PacketDistributor.sendToServer(new C2SSetBindingPacket(abilityToBind, new AbilityBinding(-1, (byte) 0, false, false, false)));
+                    PacketDistributor.sendToServer(new C2SSetBindingPacket(abilityToBind, AbilityBinding.NO_BIND));
 
                     abilityToBind = null;
                     pressedKey = null;

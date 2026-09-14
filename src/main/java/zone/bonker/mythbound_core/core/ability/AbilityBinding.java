@@ -7,6 +7,8 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
 public record AbilityBinding(int key, byte type, boolean shift, boolean control, boolean alt) {
+    public static final AbilityBinding NO_BIND = new AbilityBinding(-1, (byte) 0, false, false, false);
+
     public static final Codec<AbilityBinding> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.INT.fieldOf("key").forGetter(AbilityBinding::key),
             Codec.BYTE.fieldOf("type").forGetter(o -> o.type),
@@ -24,7 +26,7 @@ public record AbilityBinding(int key, byte type, boolean shift, boolean control,
             AbilityBinding::new
     );
 
-    public boolean isUnknown() {
+    public boolean isNoBind() {
         return key == -1;
     }
 }

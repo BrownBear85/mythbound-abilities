@@ -260,7 +260,7 @@ public class CharacterBuild extends OwnedAttachment {
         }
 
         bindings.remove(id);
-        if (!binding.isUnknown()) {
+        if (!binding.isNoBind()) {
             bindings.put(id, binding);
         }
         save();
