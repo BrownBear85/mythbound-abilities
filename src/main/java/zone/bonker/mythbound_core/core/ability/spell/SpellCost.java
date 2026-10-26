@@ -1,4 +1,4 @@
-package zone.bonker.mythbound_core.core.ability;
+package zone.bonker.mythbound_core.core.ability.spell;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -33,6 +33,10 @@ public record SpellCost(List<Entry> entries) {
 
     public Collection<ResourceLocation> getRelevantUnits() {
         return entries.stream().map(Entry::unit).toList();
+    }
+
+    public boolean isEmpty() {
+        return entries.isEmpty();
     }
 
     public record Entry(ResourceLocation unit, int amount) {

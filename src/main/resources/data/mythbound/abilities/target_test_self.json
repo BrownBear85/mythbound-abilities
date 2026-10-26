@@ -6,6 +6,7 @@
   ],
   "components": [
     {
+      "trigger": "mythbound_core:spell_cast",
       "type": "mythbound_core:shoot_projectile",
       "projectile": {
         "id": "minecraft:cow"
@@ -13,8 +14,10 @@
       "velocity": 0.5
     }
   ],
-  "targeting": {
-    "self": true,
-    "required": true
+  "spell_behavior": {
+    "targeting": {
+      "self": true,
+      "required": true
+    }
   }
 }

@@ -1,0 +1,31 @@
+{
+  "name": "Test class: windup/holding",
+  "description": [
+    "This class"
+  ],
+  "main_ability_tree": {
+    "nodes": [
+      {
+        "ability": "mythbound:behavior_test_windup",
+        "row": 1,
+        "column": 2,
+        "cost": 0
+      },
+      {
+        "ability": "mythbound:behavior_test_hold",
+        "row": 3,
+        "column": 2,
+        "cost": 0
+      },
+      {
+        "ability": "mythbound:behavior_test_cooldown",
+        "row": 5,
+        "column": 2,
+        "cost": 0
+      }
+    ]
+  },
+  "subclasses": {
+
+  }
+}

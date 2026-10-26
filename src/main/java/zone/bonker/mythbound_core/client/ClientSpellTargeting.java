@@ -15,12 +15,15 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability.Ability;
-import zone.bonker.mythbound_core.core.ability.AbilityTargeting;
+import zone.bonker.mythbound_core.core.ability.spell.SpellTargeting;
 import zone.bonker.mythbound_core.data.CharacterBuild;
+import zone.bonker.mythbound_core.data.SpellData;
+import zone.bonker.mythbound_core.networking.C2SAbilityInputPacket;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -114,7 +117,22 @@ public class ClientSpellTargeting {
             return;
         }
 
+        SpellData spellData = SpellData.get(player);
+        LivingEntity targetForCurrentSpell = spellData.isCastingSpell()
+                ? getTargetForAbility(player, MythboundCore.ABILITIES.getOrThrow(spellData.getCurrentSpell()))
+                : null;
+
         refreshTargets(level, player);
+
+        LivingEntity newTargetForCurrentSpell = spellData.isCastingSpell()
+                ? getTargetForAbility(player, MythboundCore.ABILITIES.getOrThrow(spellData.getCurrentSpell()))
+                : null;
+
+        if (targetForCurrentSpell != newTargetForCurrentSpell) {
+            PacketDistributor.sendToServer(new C2SAbilityInputPacket(spellData.getCurrentSpell(),
+                    newTargetForCurrentSpell == null ? -1 : newTargetForCurrentSpell.getId(),
+                    C2SAbilityInputPacket.UPDATE_TARGET));
+        }
     }
 
     public static void pressedKeybind() {
@@ -164,7 +182,7 @@ public class ClientSpellTargeting {
     }
 
     private static boolean canTarget(LivingEntity entity, boolean targetAllies, boolean targetEnemies) {
-        if (AbilityTargeting.isAlly(entity)) {
+        if (SpellTargeting.isAlly(entity)) {
             return targetAllies;
         }
         return targetEnemies;

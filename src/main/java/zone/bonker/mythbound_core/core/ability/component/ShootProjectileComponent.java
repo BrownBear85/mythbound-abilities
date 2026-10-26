@@ -10,15 +10,18 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
+import zone.bonker.mythbound_core.core.ability.spell.TriggerContext;
+import zone.bonker.mythbound_core.core.trigger.MythboundCriterion;
 
-import javax.annotation.Nullable;
+import java.util.Optional;
 
-public class ShootProjectileComponent implements AbilityComponent {
+public record ShootProjectileComponent(Optional<MythboundCriterion<?>> criterion, CompoundTag projectile,
+                                       float velocity, float loft, float spread, float count) implements AbilityComponent {
     public static final MapCodec<ShootProjectileComponent> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+            AbilityComponent.criterionCodec(),
             CompoundTag.CODEC.fieldOf("projectile").forGetter(o -> o.projectile),
             Codec.FLOAT.fieldOf("velocity").forGetter(o -> o.velocity),
             Codec.FLOAT.optionalFieldOf("loft", 0.0F).forGetter(o -> o.loft),
@@ -26,28 +29,14 @@ public class ShootProjectileComponent implements AbilityComponent {
             Codec.FLOAT.optionalFieldOf("count", 1.0F).forGetter(o -> o.count)
     ).apply(inst, ShootProjectileComponent::new));
 
-    private final CompoundTag projectile;
-    private final float velocity;
-    private final float loft;
-    private final float spread;
-    private final float count;
-
-    public ShootProjectileComponent(CompoundTag projectile, float velocity, float loft, float spread, float count) {
-        this.projectile = projectile;
-        this.velocity = velocity;
-        this.loft = loft;
-        this.spread = spread;
-        this.count = count;
-    }
-
     @Override
     public MapCodec<? extends AbilityComponent> codec() {
         return CODEC;
     }
 
     @Override
-    public void onCast(LivingEntity caster, @Nullable LivingEntity target) {
-        if (caster.level().isClientSide()) {
+    public void onTrigger(TriggerContext context) {
+        if (context.level.isClientSide()) {
             return;
         }
 
@@ -58,27 +47,27 @@ public class ShootProjectileComponent implements AbilityComponent {
         EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(entityId);
 
         Vec3 angle;
-        if (target == null) {
-            float xRot = caster.getXRot();
-            float yRot = caster.getYRot();
+        if (context.spellTarget == null) {
+            float xRot = context.rotation.x;
+            float yRot = context.rotation.y;
             angle = new Vec3(
                     -Mth.sin(yRot * Mth.DEG_TO_RAD) * Mth.cos(xRot * Mth.DEG_TO_RAD),
                     -Mth.sin((xRot + loft) * Mth.DEG_TO_RAD),
                     Mth.cos(yRot * Mth.DEG_TO_RAD) * Mth.cos(xRot * Mth.DEG_TO_RAD));
         } else {
-            angle = target.getEyePosition().subtract(caster.getEyePosition()).normalize();
+            angle = context.spellTarget.getEyePosition().subtract(context.caster.getEyePosition()).normalize();
         }
 
         for (int i = 0; i < count; i++) {
-            Entity entity = entityType.create((ServerLevel) caster.level(), e -> {
-                e.setPos(caster.getEyePosition());
+            Entity entity = entityType.create((ServerLevel) context.level, e -> {
+                e.setPos(context.caster.getEyePosition());
                 if (e instanceof Projectile projEntity) {
-                    projEntity.setOwner(caster);
+                    projEntity.setOwner(context.caster);
                 }
                 shoot(e, angle, velocity, spread);
-            }, caster.blockPosition(), MobSpawnType.COMMAND, false, false);
+            }, context.blockPosition(), MobSpawnType.COMMAND, false, false);
             if (entity != null) {
-                caster.level().addFreshEntity(entity);
+                context.level.addFreshEntity(entity);
             }
         }
     }
@@ -94,8 +83,8 @@ public class ShootProjectileComponent implements AbilityComponent {
         projectile.setDeltaMovement(deltaMovement);
         projectile.hasImpulse = true;
         double horizontal = deltaMovement.horizontalDistance();
-        projectile.setYRot((float)(Mth.atan2(deltaMovement.x, deltaMovement.z) * Mth.RAD_TO_DEG));
-        projectile.setXRot((float)(Mth.atan2(deltaMovement.y, horizontal) * Mth.RAD_TO_DEG));
+        projectile.setYRot((float) (Mth.atan2(deltaMovement.x, deltaMovement.z) * Mth.RAD_TO_DEG));
+        projectile.setXRot((float) (Mth.atan2(deltaMovement.y, horizontal) * Mth.RAD_TO_DEG));
         projectile.yRotO = projectile.getYRot();
         projectile.xRotO = projectile.getXRot();
     }

@@ -1,6 +1,7 @@
 package zone.bonker.mythbound_core.core.ability;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -10,44 +11,52 @@ import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.AttributeList;
 import zone.bonker.mythbound_core.core.NamedAndDescribed;
 import zone.bonker.mythbound_core.core.ability.component.AbilityComponent;
+import zone.bonker.mythbound_core.core.ability.spell.SpellTargeting;
+import zone.bonker.mythbound_core.core.ability.spell.SpellBehavior;
+import zone.bonker.mythbound_core.core.ability.spell.SpellCost;
 import zone.bonker.mythbound_core.data.MythboundSerialization;
+import zone.bonker.mythbound_core.init.MythboundTriggers;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 public final class Ability implements NamedAndDescribed {
 
-    public static final Codec<Ability> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+    public static final Codec<Ability> CODEC = RecordCodecBuilder.<Ability>create(inst -> inst.group(
             MythboundSerialization.LENIENT_COMPONENT_CODEC.fieldOf("name").forGetter(o -> o.name),
             MythboundSerialization.LENIENT_COMPONENT_CODEC.listOf().fieldOf("description").forGetter(o -> o.rawDescription),
             AbilityType.CODEC.fieldOf("type").forGetter(o -> o.type),
-            AbilityTargeting.CODEC.optionalFieldOf("targeting", AbilityTargeting.DEFAULT).forGetter(o -> o.targeting),
-            SpellCost.CODEC.optionalFieldOf("cost", SpellCost.NO_COST).forGetter(o -> o.cost),
+            SpellBehavior.CODEC.optionalFieldOf("spell_behavior", SpellBehavior.DEFAULT).forGetter(o -> o.spellBehavior),
             AbilityComponent.DIRECT_CODEC.listOf().optionalFieldOf("components", List.of()).forGetter(o -> o.components),
             AttributeList.CODEC.optionalFieldOf("attributes", AttributeList.EMPTY).forGetter(o -> o.attributes)
-    ).apply(inst, Ability::new));
+    ).apply(inst, Ability::new)).validate(Ability::validate);
 
     private final Component name;
     private final List<Component> rawDescription;
     private final List<Component> description;
     private final AbilityType type;
-    private final AbilityTargeting targeting;
-    private final SpellCost cost;
+    private final SpellBehavior spellBehavior;
     private final List<AbilityComponent> components;
     private final AttributeList attributes;
     private ResourceLocation id;
     private ResourceLocation texture;
 
-    public Ability(Component name, List<Component> description, AbilityType type, AbilityTargeting targeting,
-                   SpellCost cost, List<AbilityComponent> components, AttributeList attributes) {
+    public Ability(Component name, List<Component> description, AbilityType type, SpellBehavior spellBehavior,
+                   List<AbilityComponent> components, AttributeList attributes) {
         this.name = name;
         this.rawDescription = description;
         this.description = description.stream().map(line -> (Component) line.copy().withStyle(ChatFormatting.GRAY)).toList();
         this.type = type;
-        this.targeting = targeting;
-        this.cost = cost;
+        this.spellBehavior = spellBehavior;
         this.components = components;
         this.attributes = attributes;
+    }
+
+    private DataResult<Ability> validate() {
+        if (!type.isCastable() && spellBehavior != SpellBehavior.DEFAULT) {
+            return DataResult.error(() -> "Non-castable abilities cannot define spell behavior", this);
+        }
+        return DataResult.success(this);
     }
 
     @Override
@@ -64,12 +73,16 @@ public final class Ability implements NamedAndDescribed {
         return type;
     }
 
-    public AbilityTargeting targeting() {
-        return targeting;
+    public SpellBehavior spellBehavior() {
+        return spellBehavior;
+    }
+
+    public SpellTargeting targeting() {
+        return spellBehavior.targets();
     }
 
     public SpellCost cost() {
-        return cost;
+        return spellBehavior.cost();
     }
 
     public ResourceLocation getId() {
@@ -93,8 +106,8 @@ public final class Ability implements NamedAndDescribed {
     public void initialize(LivingEntity entity) {
         attributes.apply(entity, AttributeList.ability(getId()));
 
-        for (AbilityComponent component : components) {
-            component.onInitialize(entity, getId());
+        for (int i = 0; i < components.size(); i++) {
+            components.get(i).onInitialize(entity, getId(), i);
         }
     }
 
@@ -104,20 +117,8 @@ public final class Ability implements NamedAndDescribed {
     public void deinitialize(LivingEntity entity) {
         attributes.remove(entity, AttributeList.ability(getId()));
 
-        for (AbilityComponent component : components) {
-            component.onDeinitialize(entity, getId());
-        }
-    }
-
-    public void onCast(LivingEntity caster, @Nullable LivingEntity target) {
-        for (AbilityComponent component : components) {
-            component.onCast(caster, target);
-        }
-    }
-
-    public void onTick(LivingEntity entity) {
-        for (AbilityComponent component : components) {
-            component.onTick(entity);
+        for (int i = 0; i < components.size(); i++) {
+            components.get(i).onDeinitialize(entity, getId(), i);
         }
     }
 }

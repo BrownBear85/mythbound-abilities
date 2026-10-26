@@ -10,7 +10,7 @@ import net.minecraft.util.FastColor;
 import org.joml.Vector2ic;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.client.MythboundRendering;
-import zone.bonker.mythbound_core.core.ability.MagicUnitDefinition;
+import zone.bonker.mythbound_core.core.ability.spell.MagicUnitDefinition;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 import zone.bonker.mythbound_core.data.SpellData;
 import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;

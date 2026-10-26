@@ -6,20 +6,17 @@
   ],
   "components": [
     {
+      "trigger": "mythbound_core:kill_entity",
+      "conditions": {
+        "allow_indirect_death": true
+      },
       "type": "mythbound_core:magic_unit",
       "unit": "mythbound:special_power_points",
-      "listeners": [
-        {
-          "trigger": "mythbound_core:kill_entity",
-          "conditions": {
-            "allow_indirect_death": true
-          },
-          "amount": 5,
-          "chance": 1.0
-        }
-      ]
+      "operation": "add",
+      "amount": 5
     },
     {
+      "trigger": "mythbound_core:spell_cast",
       "type": "mythbound_core:shoot_projectile",
       "projectile": {
         "id": "minecraft:chicken"
@@ -27,10 +24,12 @@
       "velocity": 0.5
     }
   ],
-  "cost": [
-    {
-      "unit": "mythbound:special_power_points",
-      "amount": 10
-    }
-  ]
+  "spell_behavior": {
+    "cost": [
+      {
+        "unit": "mythbound:special_power_points",
+        "amount": 10
+      }
+    ]
+  }
 }

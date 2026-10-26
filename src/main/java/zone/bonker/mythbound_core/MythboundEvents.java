@@ -15,9 +15,10 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.Race;
-import zone.bonker.mythbound_core.core.ability.MagicUnitDefinition;
+import zone.bonker.mythbound_core.core.ability.spell.MagicUnitDefinition;
 import zone.bonker.mythbound_core.core.trigger.MythboundTrigger;
 import zone.bonker.mythbound_core.data.CharacterBuild;
+import zone.bonker.mythbound_core.data.SpellData;
 import zone.bonker.mythbound_core.init.MythboundTriggers;
 
 import java.util.Map;
@@ -91,11 +92,7 @@ public class MythboundEvents {
             return;
         }
 
-        CharacterBuild.getExisting(entity).ifPresent(data -> {
-            for (ResourceLocation id : data.getUnlockedAbilities()) {
-                MythboundCore.ABILITIES.getOrThrow(id).onTick(entity);
-            }
-        });
+        SpellData.getExisting(entity).ifPresent(SpellData::tick);
     }
 
     //// PLAYERS

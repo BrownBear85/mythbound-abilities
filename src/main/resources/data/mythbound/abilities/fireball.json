@@ -6,6 +6,7 @@
   ],
   "components": [
     {
+      "trigger": "mythbound_core:spell_cast",
       "type": "mythbound_core:shoot_projectile",
       "projectile": {
         "id": "minecraft:fireball"
@@ -13,10 +14,12 @@
       "velocity": 0.5
     }
   ],
-  "cost": [
-    {
-      "unit": "mythbound:mana",
-      "amount": 15
-    }
-  ]
+  "spell_behavior": {
+    "cost": [
+      {
+        "unit": "mythbound:mana",
+        "amount": 15
+      }
+    ]
+  }
 }

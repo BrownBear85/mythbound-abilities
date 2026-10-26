@@ -1,0 +1,35 @@
+{
+  "type": "spell",
+  "name": "Behavior test hold",
+  "description": [
+    "A test of spell windup and holding"
+  ],
+  "components": [
+    {
+      "trigger": "mythbound_core:spell_windup_start",
+      "type": "mythbound_core:test_message",
+      "message": "started winding up..."
+    },
+    {
+      "trigger": "mythbound_core:spell_windup_release",
+      "type": "mythbound_core:test_message",
+      "message": "released before cast"
+    },
+    {
+      "trigger": "mythbound_core:spell_cast",
+      "type": "mythbound_core:test_message",
+      "message": "cast!"
+    },
+    {
+      "trigger": "mythbound_core:spell_hold_end",
+      "type": "mythbound_core:test_message",
+      "message": "hold ended"
+    }
+  ],
+  "spell_behavior": {
+    "windup_ticks": 40,
+    "cooldown": 60,
+    "hold_ticks": 40,
+    "windup_causes_cooldown": true
+  }
+}

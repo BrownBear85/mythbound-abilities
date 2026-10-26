@@ -11,7 +11,7 @@ import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.client.AbilityInputHandler;
 import zone.bonker.mythbound_core.client.MythboundRendering;
 import zone.bonker.mythbound_core.core.ability.Ability;
-import zone.bonker.mythbound_core.core.ability.AbilityBinding;
+import zone.bonker.mythbound_core.core.ability.spell.AbilityBinding;
 import zone.bonker.mythbound_core.core.ability.AbilityTree;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 import zone.bonker.mythbound_core.networking.C2SUnlockAbilityPacket;

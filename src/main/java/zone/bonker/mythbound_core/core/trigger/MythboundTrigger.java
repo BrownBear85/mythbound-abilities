@@ -1,15 +1,18 @@
 package zone.bonker.mythbound_core.core.trigger;
 
 import com.mojang.serialization.Codec;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import zone.bonker.mythbound_core.core.ability.spell.TriggerContext;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public abstract class MythboundTrigger<T> {
@@ -17,11 +20,11 @@ public abstract class MythboundTrigger<T> {
 
     public abstract Codec<T> codec();
 
-    protected void trigger(LivingEntity entity, Predicate<T> instancePredicate) {
-        if (listenerMap.containsKey(entity)) {
-            for (Listener<T> listener : listenerMap.get(entity).values()) {
+    protected void trigger(TriggerContext context, Predicate<T> instancePredicate) {
+        if (listenerMap.containsKey(context.caster)) {
+            for (Listener<T> listener : listenerMap.get(context.caster).values()) {
                 if (instancePredicate.test(listener.instance)) {
-                    listener.callback.run();
+                    listener.callback.accept(context);
                 }
             }
         }
@@ -39,7 +42,7 @@ public abstract class MythboundTrigger<T> {
         return new LootContext.Builder(lootParams).create(Optional.empty());
     }
 
-    public void addListener(LivingEntity entity, String listenerId, T instance, Runnable callback) {
+    public void addListener(LivingEntity entity, String listenerId, T instance, Consumer<TriggerContext> callback) {
         listenerMap.computeIfAbsent(entity, e -> new HashMap<>()).put(listenerId, new Listener<>(instance, callback));
     }
 
@@ -57,7 +60,11 @@ public abstract class MythboundTrigger<T> {
         listenerMap.remove(entity);
     }
 
-    public record Listener<T>(T instance, Runnable callback) {
+    public boolean isSpellSpecific() {
+        return false;
+    }
+
+    public record Listener<T>(T instance, Consumer<TriggerContext> callback) {
 
     }
 }

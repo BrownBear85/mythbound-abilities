@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.client.ClientSpellTargeting;
-import zone.bonker.mythbound_core.core.ability.AbilityTargeting;
+import zone.bonker.mythbound_core.core.ability.spell.SpellTargeting;
 
 public class TargetingOverlay implements LayeredDraw.Layer {
     public static final ResourceLocation ID = MythboundCore.identifier("targeting_overlay");
@@ -51,7 +51,7 @@ public class TargetingOverlay implements LayeredDraw.Layer {
             if (selected) {
                 guiGraphics.blitSprite(SELECTED_TARGET_ARROW, 0, 0, SPRITE_SIZE, SPRITE_SIZE);
             }
-            guiGraphics.blitSprite(AbilityTargeting.isAlly(entity) ? ALLY_TARGET_ARROW : ENEMY_TARGET_ARROW, 0, 0, SPRITE_SIZE, SPRITE_SIZE);
+            guiGraphics.blitSprite(SpellTargeting.isAlly(entity) ? ALLY_TARGET_ARROW : ENEMY_TARGET_ARROW, 0, 0, SPRITE_SIZE, SPRITE_SIZE);
             guiGraphics.pose().popPose();
         }
     }

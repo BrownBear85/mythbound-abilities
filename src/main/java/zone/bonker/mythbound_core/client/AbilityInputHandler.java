@@ -7,7 +7,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.InputEvent;
@@ -16,9 +15,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability.Ability;
-import zone.bonker.mythbound_core.core.ability.AbilityBinding;
+import zone.bonker.mythbound_core.core.ability.spell.AbilityBinding;
 import zone.bonker.mythbound_core.data.CharacterBuild;
-import zone.bonker.mythbound_core.networking.C2SCastAbilityPacket;
+import zone.bonker.mythbound_core.data.SpellData;
+import zone.bonker.mythbound_core.networking.C2SAbilityInputPacket;
 import zone.bonker.mythbound_core.networking.C2SSetBindingPacket;
 
 import javax.annotation.Nullable;
@@ -54,32 +54,57 @@ public class AbilityInputHandler {
             return false;
         }
 
-        if (abilityToBind == null && action == GLFW.GLFW_PRESS && Minecraft.getInstance().screen == null) {
-            Optional<CharacterBuild> optional = CharacterBuild.getExisting(player);
-            if (optional.isEmpty()) {
-                return false;
-            }
+        if (abilityToBind == null && (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_RELEASE)) {
+            SpellData spellData = SpellData.get(player);
 
-            for (Map.Entry<ResourceLocation, AbilityBinding> entry : optional.get().getAbilityBindings().entrySet()) {
-                if (!AbilityInputHandler.matches(entry.getValue(), key)) {
-                    continue;
+            if (Minecraft.getInstance().screen != null) {
+                if (spellData.isCastingSpell()) {
+                    PacketDistributor.sendToServer(new C2SAbilityInputPacket(CharacterBuild.NONE, -1, C2SAbilityInputPacket.RELEASE));
+                    spellData.stopCastingSpell(player.level().getGameTime());
                 }
-
-                Ability ability = MythboundCore.ABILITIES.getOrThrow(entry.getKey());
-                if (!ability.type().isCastable() || !ability.cost().canCast(player)) {
+                return false;
+            } else {
+                Optional<CharacterBuild> optional = CharacterBuild.getExisting(player);
+                if (optional.isEmpty()) {
                     return false;
                 }
 
-                LivingEntity target = null;
-                if (!ability.targeting().isEmpty()) {
-                    target = ClientSpellTargeting.getTargetForAbility(player, ability);
-                    if (target == null && ability.targeting().targetRequired()) {
-                        return false;
-                    }
+                if (action == GLFW.GLFW_PRESS && spellData.isCastingSpell()) {
+                    return false;
                 }
 
-                PacketDistributor.sendToServer(new C2SCastAbilityPacket(entry.getKey(), target == null ? -1 : target.getId()));
-                return true;
+                for (Map.Entry<ResourceLocation, AbilityBinding> entry : optional.get().getAbilityBindings().entrySet()) {
+                    if (!matches(entry.getValue(), key)) {
+                        continue;
+                    }
+
+                    if (action == GLFW.GLFW_RELEASE) {
+                        if (entry.getKey().equals(spellData.getCurrentSpell())) {
+                            PacketDistributor.sendToServer(new C2SAbilityInputPacket(entry.getKey(), -1, C2SAbilityInputPacket.RELEASE));
+                            spellData.stopCastingSpell(player.level().getGameTime());
+                            return true;
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    Ability ability = MythboundCore.ABILITIES.getOrThrow(entry.getKey());
+                    if (!ability.type().isCastable() || !ability.cost().canCast(player) || spellData.isOnCooldown(ability.getId())) {
+                        return false;
+                    }
+
+                    LivingEntity target = null;
+                    if (!ability.targeting().isEmpty()) {
+                        target = ClientSpellTargeting.getTargetForAbility(player, ability);
+                        if (target == null && ability.spellBehavior().requiresTargetForInitialInput()) {
+                            return false;
+                        }
+                    }
+
+                    PacketDistributor.sendToServer(new C2SAbilityInputPacket(entry.getKey(), target == null ? -1 : target.getId(), C2SAbilityInputPacket.START_HOLDING_OR_INSTANT_CAST));
+                    SpellData.get(player).startHoldingOrInstantCast(ability, target, player.level().getGameTime());
+                    return true;
+                }
             }
         }
 
@@ -122,7 +147,7 @@ public class AbilityInputHandler {
         return false;
     }
 
-    public static boolean matches(AbilityBinding binding, InputConstants.Key key) {
+    private static boolean matches(AbilityBinding binding, InputConstants.Key key) {
         return InputConstants.Type.values()[binding.type()].getOrCreate(binding.key()).equals(key)
                 && (!binding.shift() || Screen.hasShiftDown())
                 && (!binding.control() || Screen.hasControlDown())

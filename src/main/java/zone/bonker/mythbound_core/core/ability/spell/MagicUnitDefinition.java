@@ -1,4 +1,4 @@
-package zone.bonker.mythbound_core.core.ability;
+package zone.bonker.mythbound_core.core.ability.spell;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -13,10 +13,11 @@ import zone.bonker.mythbound_core.data.SpellData;
 
 import java.util.List;
 
-public record MagicUnitDefinition(Component name, int color, int maximum, DisplayType display, List<ListenerDefinition<?>> defaultListeners) {
+public record MagicUnitDefinition(Component name, int color, int minimum, int maximum, DisplayType display, List<ListenerDefinition<?>> defaultListeners) {
     public static final MapCodec<MagicUnitDefinition> MAP_CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
             MythboundSerialization.LENIENT_COMPONENT_CODEC.fieldOf("name").forGetter(o -> o.name),
             MythboundSerialization.COLOR_CODEC.fieldOf("color").forGetter(o -> o.color),
+            Codec.INT.optionalFieldOf("minimum", 0).forGetter(o -> o.minimum),
             Codec.INT.fieldOf("maximum").forGetter(o -> o.maximum),
             StringRepresentable.fromEnum(DisplayType::values).fieldOf("display").forGetter(o -> o.display),
             ListenerDefinition.CODEC.listOf().optionalFieldOf("listeners", List.of()).forGetter(o -> o.defaultListeners)
@@ -47,7 +48,7 @@ public record MagicUnitDefinition(Component name, int color, int maximum, Displa
         ).apply(inst, ListenerDefinition::new));
 
         public void addListener(LivingEntity entity, ResourceLocation unitId, String source, int index) {
-            criterion.trigger().addListener(entity, makeListenerId(unitId, source, index), criterion.instance(), () -> {
+            criterion.trigger().addListener(entity, makeListenerId(unitId, source, index), criterion.instance(), context -> {
                 if (entity.getRandom().nextFloat() < chance) {
                     SpellData.get(entity).addUnits(unitId, amount);
                 }
@@ -59,7 +60,7 @@ public record MagicUnitDefinition(Component name, int color, int maximum, Displa
         }
 
         private String makeListenerId(ResourceLocation unitId, String source, int index) {
-            return unitId.toString() + "-" + source + "-" + index;
+            return "magic-unit-" + unitId.toString() + "-" + source + "-" + index;
         }
     }
 }

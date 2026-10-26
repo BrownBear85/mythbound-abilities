@@ -13,7 +13,7 @@ import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.client.MythboundCoreClient;
 import zone.bonker.mythbound_core.core.*;
-import zone.bonker.mythbound_core.core.ability.AbilityBinding;
+import zone.bonker.mythbound_core.core.ability.spell.AbilityBinding;
 import zone.bonker.mythbound_core.core.ability.AbilityTree;
 import zone.bonker.mythbound_core.init.MythboundAttachmentTypes;
 

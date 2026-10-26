@@ -14,11 +14,6 @@ public class MythboundNetworking {
         // Server to Client
 
         registrar.playToClient(
-                S2CEntityAbilityPacket.TYPE,
-                S2CEntityAbilityPacket.CODEC,
-                S2CEntityAbilityPacket::handle);
-
-        registrar.playToClient(
                 S2CSyncRegistriesPacket.TYPE,
                 S2CSyncRegistriesPacket.CODEC,
                 S2CSyncRegistriesPacket::handle);
@@ -31,9 +26,9 @@ public class MythboundNetworking {
         // Client to Server
 
         registrar.playToServer(
-                C2SCastAbilityPacket.TYPE,
-                C2SCastAbilityPacket.CODEC,
-                C2SCastAbilityPacket::handle);
+                C2SAbilityInputPacket.TYPE,
+                C2SAbilityInputPacket.CODEC,
+                C2SAbilityInputPacket::handle);
 
         registrar.playToServer(
                 C2SSetBindingPacket.TYPE,

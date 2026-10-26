@@ -9,6 +9,7 @@ import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability.component.AbilityComponent;
 import zone.bonker.mythbound_core.core.ability.component.MagicUnitComponent;
 import zone.bonker.mythbound_core.core.ability.component.ShootProjectileComponent;
+import zone.bonker.mythbound_core.core.ability.component.TestMessageComponent;
 
 import java.util.function.Supplier;
 
@@ -21,6 +22,9 @@ public class AbilityComponentSerializers {
 
     public static final Registry<MapCodec<? extends AbilityComponent>> REGISTRY =
             new RegistryBuilder<>(KEY).sync(true).create();
+
+    public static final Supplier<MapCodec<TestMessageComponent>> TEST_MESSAGE =
+            REGISTER.register("test_message", () -> TestMessageComponent.CODEC);
 
     public static final Supplier<MapCodec<ShootProjectileComponent>> SHOOT_PROJECTILE =
             REGISTER.register("shoot_projectile", () -> ShootProjectileComponent.CODEC);

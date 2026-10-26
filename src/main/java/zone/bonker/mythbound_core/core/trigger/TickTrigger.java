@@ -8,23 +8,20 @@ import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import zone.bonker.mythbound_core.core.ability.spell.TriggerContext;
 import zone.bonker.mythbound_core.init.MythboundTriggers;
 
 import java.util.Optional;
 
 @EventBusSubscriber
 public class TickTrigger extends MythboundTrigger<TickTrigger.TriggerInstance> {
-    public TickTrigger() {
-        System.out.println("constructed " + this);
-    }
-
     @SubscribeEvent
     public static void onEntityTick(EntityTickEvent.Post event) {
         if (!(event.getEntity() instanceof LivingEntity entity) || !entity.isAlive() || isIrrelevant(entity)) {
             return;
         }
 
-        MythboundTriggers.TICK.get().trigger(entity, instance -> instance.matches(entity));
+        MythboundTriggers.TICK.get().trigger(new TriggerContext(entity), instance -> instance.matches(entity));
     }
 
     @Override

@@ -3,6 +3,7 @@ package zone.bonker.mythbound_core.client;
 import com.mojang.math.Axis;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 
 public class MythboundRendering {
@@ -29,10 +30,14 @@ public class MythboundRendering {
     }
 
     public static void fillF(GuiGraphics guiGraphics, float x0, float y0, float x1, float y1, int color) {
+        fillF(guiGraphics, RenderType.gui(), x0, y0, x1, y1, color);
+    }
+
+    public static void fillF(GuiGraphics guiGraphics, RenderType renderType, float x0, float y0, float x1, float y1, int color) {
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(x0, y0, 0);
         guiGraphics.pose().scale(x1 - x0, y1 - y0, 1);
-        guiGraphics.fill(0, 0, 1, 1, color);
+        guiGraphics.fill(renderType, 0, 0, 1, 1, color);
         guiGraphics.pose().popPose();
     }
 }

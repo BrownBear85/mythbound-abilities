@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
@@ -12,10 +13,12 @@ import org.joml.Vector2i;
 import org.joml.Vector2ic;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.client.AbilityInputHandler;
+import zone.bonker.mythbound_core.client.MythboundRendering;
 import zone.bonker.mythbound_core.client.gui.screen.ability_tree.AbilityWidget;
 import zone.bonker.mythbound_core.core.ability.Ability;
-import zone.bonker.mythbound_core.core.ability.AbilityBinding;
+import zone.bonker.mythbound_core.core.ability.spell.AbilityBinding;
 import zone.bonker.mythbound_core.data.CharacterBuild;
+import zone.bonker.mythbound_core.data.SpellData;
 
 import java.util.*;
 import java.util.List;
@@ -47,6 +50,7 @@ public class AbilityOverlay implements LayeredDraw.Layer {
             return;
         }
 
+        float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
         int x = MIN_SPACING;
         int y = MARGIN;
         int maxWidth = ABILITY_SIZE + MIN_SPACING;
@@ -58,7 +62,7 @@ public class AbilityOverlay implements LayeredDraw.Layer {
             ABILITY_LOCATIONS.put(id, new Vector2i(x, y));
 
             Ability ability = MythboundCore.ABILITIES.getOrThrow(id);
-            Vector2ic size = renderAbility(guiGraphics, ability, characterBuild.getAbilityBindings().get(id), x, y);
+            Vector2ic size = renderAbility(guiGraphics, ability, characterBuild.getAbilityBindings().get(id), x, y, partialTick);
 
             if (size.x() > maxWidth) {
                 maxWidth = size.x();
@@ -71,7 +75,9 @@ public class AbilityOverlay implements LayeredDraw.Layer {
         }
     }
 
-    private Vector2ic renderAbility(GuiGraphics guiGraphics, Ability ability, AbilityBinding binding, int x, int y) {
+    private Vector2ic renderAbility(GuiGraphics guiGraphics, Ability ability, AbilityBinding binding, int x, int y, float partialTick) {
+        assert Minecraft.getInstance().player != null;
+
         guiGraphics.fill(x - 1, y - 1, x + ABILITY_SIZE + 1, y + ABILITY_SIZE + 1, 0x55888888);
 
         guiGraphics.blit(ability.getTexture(),
@@ -83,6 +89,12 @@ public class AbilityOverlay implements LayeredDraw.Layer {
                 ABILITY_SIZE,
                 ABILITY_SIZE,
                 ABILITY_SIZE);
+
+        float cooldownAmount = SpellData.get(Minecraft.getInstance().player).getCooldownAmount(ability, partialTick);
+        if (cooldownAmount > 0) {
+            MythboundRendering.fillF(guiGraphics, RenderType.guiOverlay(),
+                    x - 1, y - 1 + (1 - cooldownAmount) * (ABILITY_SIZE + 2), x + 1 + ABILITY_SIZE, y + 1 + ABILITY_SIZE, Integer.MAX_VALUE);
+        }
 
         Font font = Minecraft.getInstance().font;
         Component text = Component.literal(AbilityInputHandler.getDisplayName(binding).getString().replace(" + ", "+"));

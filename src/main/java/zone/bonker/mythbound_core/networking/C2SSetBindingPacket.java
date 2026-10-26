@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.core.ability.Ability;
-import zone.bonker.mythbound_core.core.ability.AbilityBinding;
+import zone.bonker.mythbound_core.core.ability.spell.AbilityBinding;
 import zone.bonker.mythbound_core.data.CharacterBuild;
 
 public record C2SSetBindingPacket(ResourceLocation abilityId, AbilityBinding binding) implements CustomPacketPayload {

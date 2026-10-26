@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import zone.bonker.mythbound_core.core.ability.Ability;
 import zone.bonker.mythbound_core.core.CharacterClass;
 import zone.bonker.mythbound_core.core.Race;
-import zone.bonker.mythbound_core.core.ability.MagicUnitDefinition;
+import zone.bonker.mythbound_core.core.ability.spell.MagicUnitDefinition;
 import zone.bonker.mythbound_core.data.MythboundReloadableDataFiles;
 import zone.bonker.mythbound_core.data.MythboundReloadableRegistries;
 import zone.bonker.mythbound_core.data.ReloadableJsonRegistry;

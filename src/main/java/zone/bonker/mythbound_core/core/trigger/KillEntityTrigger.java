@@ -12,16 +12,13 @@ import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import zone.bonker.mythbound_core.core.ability.spell.TriggerContext;
 import zone.bonker.mythbound_core.init.MythboundTriggers;
 
 import java.util.Optional;
 
 @EventBusSubscriber
 public class KillEntityTrigger extends MythboundTrigger<KillEntityTrigger.TriggerInstance> {
-    public KillEntityTrigger() {
-        System.out.println("constructed " + this);
-    }
-
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent.Post event) {
         if (event.getEntity().isAlive()) {
@@ -40,7 +37,10 @@ public class KillEntityTrigger extends MythboundTrigger<KillEntityTrigger.Trigge
         }
 
         final boolean finalDirectDeath = directDeath;
-        MythboundTriggers.KILL_ENTITY.get().trigger(livingAttacker, instance -> instance.matches(livingAttacker, event.getEntity(), event.getSource(), finalDirectDeath));
+
+        TriggerContext context = new TriggerContext(livingAttacker);
+        MythboundTriggers.KILL_ENTITY.get().trigger(context,
+                instance -> instance.matches(livingAttacker, event.getEntity(), event.getSource(), finalDirectDeath));
     }
 
     @Override
@@ -52,7 +52,7 @@ public class KillEntityTrigger extends MythboundTrigger<KillEntityTrigger.Trigge
                                   Optional<DamageSourcePredicate> killingBlow, boolean allowIndirectDeath) {
         public static final Codec<TriggerInstance> CODEC = RecordCodecBuilder.create(inst -> inst.group(
                 EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("attacker").forGetter(TriggerInstance::attacker),
-                EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("victim").forGetter(TriggerInstance::victim),
+                EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("target").forGetter(TriggerInstance::victim),
                 DamageSourcePredicate.CODEC.optionalFieldOf("killing_blow").forGetter(TriggerInstance::killingBlow),
                 Codec.BOOL.optionalFieldOf("allow_indirect_death", false).forGetter(TriggerInstance::allowIndirectDeath)
         ).apply(inst, TriggerInstance::new));
