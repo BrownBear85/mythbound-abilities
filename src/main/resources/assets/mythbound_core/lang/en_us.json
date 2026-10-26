@@ -28,5 +28,7 @@
   "gui.mythbound_core.ability_tree.node_click_to_unlock": "Click to unlock for %s point",
   "gui.mythbound_core.ability_tree.node_unlocked": "Unlocked",
   "gui.mythbound_core.ability_tree.node_no_bind": "None",
-  "gui.mythbound_core.ability_tree.node_bound": "Bound to %s"
+  "gui.mythbound_core.ability_tree.node_bound": "Bound to %s",
+  "key.mythbound_core.target": "Switch Spell Target",
+  "key.mythbound_core.toggle_spell_keybinds": "Toggle Spell Keybinds"
 }

@@ -16,11 +16,11 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.common.NeoForge;
-import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.client.gui.overlay.AbilityOverlay;
@@ -54,11 +54,19 @@ public class MythboundCoreClient {
     public static ModelProperties CURRENT_MODEL_PROPERTIES = null;
 
     // Keybinds
+    public static final String CATEGORY = "Mythbound Core";
+
     public static final KeyMapping TARGETING_KEYBIND = new KeyMapping("key." + MythboundCore.MODID + ".target",
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_LEFT_ALT,
-            MythboundCore.MODID);
+            InputConstants.KEY_LALT,
+            CATEGORY);
+
+    public static final KeyMapping KEYBIND_DISPLAY_TOGGLE = new KeyMapping("key." + MythboundCore.MODID + ".toggle_spell_keybinds",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            InputConstants.UNKNOWN.getValue(),
+            CATEGORY);
 
     public MythboundCoreClient(IEventBus modEventBus, ModContainer container) {
         modEventBus.addListener(this::clientSetup);
@@ -68,6 +76,8 @@ public class MythboundCoreClient {
 
         NeoForge.EVENT_BUS.addListener(this::registerClientCommands);
         NeoForge.EVENT_BUS.addListener(this::keyInput);
+
+        container.registerConfig(ModConfig.Type.CLIENT, MythboundClientConfig.CONFIG_SPEC);
     }
 
     //// EVENTS
@@ -91,11 +101,16 @@ public class MythboundCoreClient {
 
     private void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(TARGETING_KEYBIND);
+        event.register(KEYBIND_DISPLAY_TOGGLE);
     }
 
     private void keyInput(InputEvent.Key event) {
         while (TARGETING_KEYBIND.consumeClick()) {
             ClientSpellTargeting.pressedKeybind();
+        }
+
+        while (KEYBIND_DISPLAY_TOGGLE.consumeClick()) {
+            MythboundClientConfig.CONFIG.displaySpellBinds.set(!MythboundClientConfig.CONFIG.displaySpellBinds.get());
         }
     }
 

@@ -13,6 +13,7 @@ import org.joml.Vector2i;
 import org.joml.Vector2ic;
 import zone.bonker.mythbound_core.MythboundCore;
 import zone.bonker.mythbound_core.client.AbilityInputHandler;
+import zone.bonker.mythbound_core.client.MythboundClientConfig;
 import zone.bonker.mythbound_core.client.MythboundRendering;
 import zone.bonker.mythbound_core.client.gui.screen.ability_tree.AbilityWidget;
 import zone.bonker.mythbound_core.core.ability.Ability;
@@ -96,8 +97,12 @@ public class AbilityOverlay implements LayeredDraw.Layer {
                     x - 1, y - 1 + (1 - cooldownAmount) * (ABILITY_SIZE + 2), x + 1 + ABILITY_SIZE, y + 1 + ABILITY_SIZE, Integer.MAX_VALUE);
         }
 
+        String keybindDisplayStr = MythboundClientConfig.CONFIG.displaySpellBinds.get()
+                ? AbilityInputHandler.getDisplayName(binding).getString().replace(" + ", "+")
+                : "";
+
         Font font = Minecraft.getInstance().font;
-        Component text = Component.literal(AbilityInputHandler.getDisplayName(binding).getString().replace(" + ", "+"));
+        Component text = Component.literal(keybindDisplayStr);
         List<FormattedCharSequence> lines = font.split(text, ABILITY_SIZE * 3);
 
         int maxWidth = 0;
